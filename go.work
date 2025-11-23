@@ -1,0 +1,10 @@
+go 1.24
+
+use (
+	./pkg/config
+	./pkg/database
+	./pkg/kafka
+	./pkg/logger
+	./pkg/proto
+	./services/template-service
+)

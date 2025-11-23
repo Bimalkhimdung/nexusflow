@@ -1,0 +1,112 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Go workspace file
+go.work.sum
+
+# Dependency directories
+vendor/
+
+# Go build cache
+.cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Generated code
+pkg/proto/**/*.pb.go
+pkg/proto/**/*_grpc.pb.go
+
+# Docker
+.docker/
+
+# Kubernetes
+*.kubeconfig
+
+# Helm
+charts/*.tgz
+
+# Node.js (for frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Frontend build
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/.nuxt/
+
+# MinIO data
+.minio.sys/
+minio-data/
+
+# Kafka data
+kafka-data/
+
+# PostgreSQL data
+postgres-data/
+
+# Elasticsearch data
+elasticsearch-data/
+
+# Certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+certs/
+
+# Backup files
+*.bak
+*.backup
+
+# OS
+Thumbs.db

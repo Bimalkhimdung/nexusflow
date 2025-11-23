@@ -1,0 +1,323 @@
+syntax = "proto3";
+
+package nexusflow.issue.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/issue/v1;issuev1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+import "proto/common/v1/common.proto";
+
+// Issue entity
+message Issue {
+  string id = 1;
+  string project_id = 2;
+  string key = 3;                     // e.g., "PROJ-123"
+  string summary = 4;
+  string description = 5;             // Rich text (markdown)
+  IssueType type = 6;
+  IssuePriority priority = 7;
+  string status_id = 8;
+  string assignee_id = 9;
+  string reporter_id = 10;
+  repeated string label_ids = 11;
+  repeated string watcher_ids = 12;
+  string parent_id = 13;              // For sub-tasks and hierarchy
+  repeated CustomFieldValue custom_fields = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+  google.protobuf.Timestamp due_date = 17;
+  int32 story_points = 18;
+  string sprint_id = 19;
+}
+
+// Issue type
+enum IssueType {
+  ISSUE_TYPE_UNSPECIFIED = 0;
+  ISSUE_TYPE_EPIC = 1;
+  ISSUE_TYPE_STORY = 2;
+  ISSUE_TYPE_TASK = 3;
+  ISSUE_TYPE_SUB_TASK = 4;
+  ISSUE_TYPE_BUG = 5;
+  ISSUE_TYPE_IMPROVEMENT = 6;
+}
+
+// Issue priority
+enum IssuePriority {
+  ISSUE_PRIORITY_UNSPECIFIED = 0;
+  ISSUE_PRIORITY_LOWEST = 1;
+  ISSUE_PRIORITY_LOW = 2;
+  ISSUE_PRIORITY_MEDIUM = 3;
+  ISSUE_PRIORITY_HIGH = 4;
+  ISSUE_PRIORITY_HIGHEST = 5;
+}
+
+// Custom field definition
+message CustomField {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  string description = 4;
+  CustomFieldType type = 5;
+  bool required = 6;
+  google.protobuf.Any default_value = 7;
+  repeated string options = 8;        // For select/multi-select
+  map<string, string> config = 9;    // Type-specific configuration
+}
+
+// Custom field type
+enum CustomFieldType {
+  CUSTOM_FIELD_TYPE_UNSPECIFIED = 0;
+  CUSTOM_FIELD_TYPE_TEXT = 1;
+  CUSTOM_FIELD_TYPE_NUMBER = 2;
+  CUSTOM_FIELD_TYPE_DATE = 3;
+  CUSTOM_FIELD_TYPE_SELECT = 4;
+  CUSTOM_FIELD_TYPE_MULTI_SELECT = 5;
+  CUSTOM_FIELD_TYPE_USER = 6;
+  CUSTOM_FIELD_TYPE_CHECKBOX = 7;
+  CUSTOM_FIELD_TYPE_URL = 8;
+  CUSTOM_FIELD_TYPE_EMAIL = 9;
+  CUSTOM_FIELD_TYPE_TEXTAREA = 10;
+}
+
+// Custom field value
+message CustomFieldValue {
+  string field_id = 1;
+  google.protobuf.Any value = 2;
+}
+
+// Issue link
+message IssueLink {
+  string id = 1;
+  string source_issue_id = 2;
+  string target_issue_id = 3;
+  IssueLinkType type = 4;
+}
+
+// Issue link type
+enum IssueLinkType {
+  ISSUE_LINK_TYPE_UNSPECIFIED = 0;
+  ISSUE_LINK_TYPE_BLOCKS = 1;
+  ISSUE_LINK_TYPE_BLOCKED_BY = 2;
+  ISSUE_LINK_TYPE_RELATES_TO = 3;
+  ISSUE_LINK_TYPE_DUPLICATES = 4;
+  ISSUE_LINK_TYPE_DUPLICATED_BY = 5;
+  ISSUE_LINK_TYPE_CAUSES = 6;
+  ISSUE_LINK_TYPE_CAUSED_BY = 7;
+}
+
+// Issue service
+service IssueService {
+  // Issue management
+  rpc CreateIssue(CreateIssueRequest) returns (CreateIssueResponse);
+  rpc GetIssue(GetIssueRequest) returns (GetIssueResponse);
+  rpc GetIssueByKey(GetIssueByKeyRequest) returns (GetIssueByKeyResponse);
+  rpc UpdateIssue(UpdateIssueRequest) returns (UpdateIssueResponse);
+  rpc DeleteIssue(DeleteIssueRequest) returns (DeleteIssueResponse);
+  rpc ListIssues(ListIssuesRequest) returns (ListIssuesResponse);
+  rpc SearchIssues(SearchIssuesRequest) returns (SearchIssuesResponse);
+  
+  // Issue hierarchy
+  rpc GetIssueChildren(GetIssueChildrenRequest) returns (GetIssueChildrenResponse);
+  rpc MoveIssue(MoveIssueRequest) returns (MoveIssueResponse);
+  
+  // Issue links
+  rpc CreateIssueLink(CreateIssueLinkRequest) returns (CreateIssueLinkResponse);
+  rpc DeleteIssueLink(DeleteIssueLinkRequest) returns (DeleteIssueLinkResponse);
+  rpc GetIssueLinks(GetIssueLinksRequest) returns (GetIssueLinksResponse);
+  
+  // Watchers
+  rpc AddWatcher(AddWatcherRequest) returns (AddWatcherResponse);
+  rpc RemoveWatcher(RemoveWatcherRequest) returns (RemoveWatcherResponse);
+  
+  // Custom fields
+  rpc CreateCustomField(CreateCustomFieldRequest) returns (CreateCustomFieldResponse);
+  rpc UpdateCustomField(UpdateCustomFieldRequest) returns (UpdateCustomFieldResponse);
+  rpc DeleteCustomField(DeleteCustomFieldRequest) returns (DeleteCustomFieldResponse);
+  rpc ListCustomFields(ListCustomFieldsRequest) returns (ListCustomFieldsResponse);
+}
+
+// Request/Response messages
+
+message CreateIssueRequest {
+  string project_id = 1;
+  string summary = 2;
+  string description = 3;
+  IssueType type = 4;
+  IssuePriority priority = 5;
+  string assignee_id = 6;
+  string parent_id = 7;
+  repeated string label_ids = 8;
+  repeated CustomFieldValue custom_fields = 9;
+}
+
+message CreateIssueResponse {
+  Issue issue = 1;
+}
+
+message GetIssueRequest {
+  string id = 1;
+}
+
+message GetIssueResponse {
+  Issue issue = 1;
+}
+
+message GetIssueByKeyRequest {
+  string key = 1;
+}
+
+message GetIssueByKeyResponse {
+  Issue issue = 1;
+}
+
+message UpdateIssueRequest {
+  string id = 1;
+  optional string summary = 2;
+  optional string description = 3;
+  optional IssuePriority priority = 4;
+  optional string status_id = 5;
+  optional string assignee_id = 6;
+  repeated string label_ids = 7;
+  repeated CustomFieldValue custom_fields = 8;
+  optional int32 story_points = 9;
+}
+
+message UpdateIssueResponse {
+  Issue issue = 1;
+}
+
+message DeleteIssueRequest {
+  string id = 1;
+}
+
+message DeleteIssueResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ListIssuesRequest {
+  string project_id = 1;
+  nexusflow.common.v1.PaginationRequest pagination = 2;
+  IssueType type = 3;
+  string assignee_id = 4;
+  string sprint_id = 5;
+  repeated string status_ids = 6;
+}
+
+message ListIssuesResponse {
+  repeated Issue issues = 1;
+  nexusflow.common.v1.PaginationResponse pagination = 2;
+}
+
+message SearchIssuesRequest {
+  string query = 1;                   // JQL-like query
+  nexusflow.common.v1.PaginationRequest pagination = 2;
+  repeated string project_ids = 3;
+}
+
+message SearchIssuesResponse {
+  repeated Issue issues = 1;
+  nexusflow.common.v1.PaginationResponse pagination = 2;
+}
+
+message GetIssueChildrenRequest {
+  string id = 1;
+}
+
+message GetIssueChildrenResponse {
+  repeated Issue children = 1;
+}
+
+message MoveIssueRequest {
+  string id = 1;
+  string target_project_id = 2;
+}
+
+message MoveIssueResponse {
+  Issue issue = 1;
+}
+
+message CreateIssueLinkRequest {
+  string source_issue_id = 1;
+  string target_issue_id = 2;
+  IssueLinkType type = 3;
+}
+
+message CreateIssueLinkResponse {
+  IssueLink link = 1;
+}
+
+message DeleteIssueLinkRequest {
+  string id = 1;
+}
+
+message DeleteIssueLinkResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message GetIssueLinksRequest {
+  string issue_id = 1;
+}
+
+message GetIssueLinksResponse {
+  repeated IssueLink links = 1;
+}
+
+message AddWatcherRequest {
+  string issue_id = 1;
+  string user_id = 2;
+}
+
+message AddWatcherResponse {
+  Issue issue = 1;
+}
+
+message RemoveWatcherRequest {
+  string issue_id = 1;
+  string user_id = 2;
+}
+
+message RemoveWatcherResponse {
+  Issue issue = 1;
+}
+
+message CreateCustomFieldRequest {
+  string project_id = 1;
+  string name = 2;
+  string description = 3;
+  CustomFieldType type = 4;
+  bool required = 5;
+  repeated string options = 6;
+}
+
+message CreateCustomFieldResponse {
+  CustomField field = 1;
+}
+
+message UpdateCustomFieldRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional bool required = 4;
+  repeated string options = 5;
+}
+
+message UpdateCustomFieldResponse {
+  CustomField field = 1;
+}
+
+message DeleteCustomFieldRequest {
+  string id = 1;
+}
+
+message DeleteCustomFieldResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ListCustomFieldsRequest {
+  string project_id = 1;
+}
+
+message ListCustomFieldsResponse {
+  repeated CustomField fields = 1;
+}

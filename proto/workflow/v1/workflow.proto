@@ -1,0 +1,263 @@
+syntax = "proto3";
+
+package nexusflow.workflow.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/workflow/v1;workflowv1";
+
+import "google/protobuf/timestamp.proto";
+import "proto/common/v1/common.proto";
+
+// Workflow entity
+message Workflow {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  string description = 4;
+  repeated Status statuses = 5;
+  repeated Transition transitions = 6;
+  bool is_default = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// Status entity
+message Status {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  StatusCategory category = 4;
+  string color = 5;              // Hex color code
+  int32 position = 6;            // For ordering
+}
+
+// Status category
+enum StatusCategory {
+  STATUS_CATEGORY_UNSPECIFIED = 0;
+  STATUS_CATEGORY_TODO = 1;
+  STATUS_CATEGORY_IN_PROGRESS = 2;
+  STATUS_CATEGORY_DONE = 3;
+}
+
+// Transition entity
+message Transition {
+  string id = 1;
+  string name = 2;
+  string from_status_id = 3;
+  string to_status_id = 4;
+  repeated TransitionRule rules = 5;
+  repeated TransitionValidator validators = 6;
+  repeated TransitionPostFunction post_functions = 7;
+}
+
+// Transition rule
+message TransitionRule {
+  string id = 1;
+  TransitionRuleType type = 2;
+  map<string, string> config = 3;
+}
+
+// Transition rule type
+enum TransitionRuleType {
+  TRANSITION_RULE_TYPE_UNSPECIFIED = 0;
+  TRANSITION_RULE_TYPE_PERMISSION = 1;
+  TRANSITION_RULE_TYPE_CONDITION = 2;
+  TRANSITION_RULE_TYPE_USER_IN_ROLE = 3;
+  TRANSITION_RULE_TYPE_USER_IS_ASSIGNEE = 4;
+  TRANSITION_RULE_TYPE_USER_IS_REPORTER = 5;
+}
+
+// Transition validator
+message TransitionValidator {
+  string id = 1;
+  TransitionValidatorType type = 2;
+  map<string, string> config = 3;
+}
+
+// Transition validator type
+enum TransitionValidatorType {
+  TRANSITION_VALIDATOR_TYPE_UNSPECIFIED = 0;
+  TRANSITION_VALIDATOR_TYPE_FIELD_REQUIRED = 1;
+  TRANSITION_VALIDATOR_TYPE_FIELD_CHANGED = 2;
+  TRANSITION_VALIDATOR_TYPE_PERMISSION = 3;
+}
+
+// Transition post function
+message TransitionPostFunction {
+  string id = 1;
+  TransitionPostFunctionType type = 2;
+  map<string, string> config = 3;
+}
+
+// Transition post function type
+enum TransitionPostFunctionType {
+  TRANSITION_POST_FUNCTION_TYPE_UNSPECIFIED = 0;
+  TRANSITION_POST_FUNCTION_TYPE_ASSIGN_TO_CURRENT_USER = 1;
+  TRANSITION_POST_FUNCTION_TYPE_ASSIGN_TO_REPORTER = 2;
+  TRANSITION_POST_FUNCTION_TYPE_UPDATE_FIELD = 3;
+  TRANSITION_POST_FUNCTION_TYPE_ADD_COMMENT = 4;
+  TRANSITION_POST_FUNCTION_TYPE_SEND_NOTIFICATION = 5;
+}
+
+// Workflow service
+service WorkflowService {
+  // Workflow management
+  rpc CreateWorkflow(CreateWorkflowRequest) returns (CreateWorkflowResponse);
+  rpc GetWorkflow(GetWorkflowRequest) returns (GetWorkflowResponse);
+  rpc UpdateWorkflow(UpdateWorkflowRequest) returns (UpdateWorkflowResponse);
+  rpc DeleteWorkflow(DeleteWorkflowRequest) returns (DeleteWorkflowResponse);
+  rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse);
+  
+  // Status management
+  rpc CreateStatus(CreateStatusRequest) returns (CreateStatusResponse);
+  rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+  rpc DeleteStatus(DeleteStatusRequest) returns (DeleteStatusResponse);
+  rpc ReorderStatuses(ReorderStatusesRequest) returns (ReorderStatusesResponse);
+  
+  // Transition management
+  rpc CreateTransition(CreateTransitionRequest) returns (CreateTransitionResponse);
+  rpc UpdateTransition(UpdateTransitionRequest) returns (UpdateTransitionResponse);
+  rpc DeleteTransition(DeleteTransitionRequest) returns (DeleteTransitionResponse);
+  
+  // Transition execution
+  rpc ExecuteTransition(ExecuteTransitionRequest) returns (ExecuteTransitionResponse);
+  rpc GetAvailableTransitions(GetAvailableTransitionsRequest) returns (GetAvailableTransitionsResponse);
+}
+
+// Request/Response messages
+
+message CreateWorkflowRequest {
+  string project_id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message CreateWorkflowResponse {
+  Workflow workflow = 1;
+}
+
+message GetWorkflowRequest {
+  string id = 1;
+}
+
+message GetWorkflowResponse {
+  Workflow workflow = 1;
+}
+
+message UpdateWorkflowRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+}
+
+message UpdateWorkflowResponse {
+  Workflow workflow = 1;
+}
+
+message DeleteWorkflowRequest {
+  string id = 1;
+}
+
+message DeleteWorkflowResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ListWorkflowsRequest {
+  string project_id = 1;
+}
+
+message ListWorkflowsResponse {
+  repeated Workflow workflows = 1;
+}
+
+message CreateStatusRequest {
+  string workflow_id = 1;
+  string name = 2;
+  string description = 3;
+  StatusCategory category = 4;
+  string color = 5;
+}
+
+message CreateStatusResponse {
+  Status status = 1;
+}
+
+message UpdateStatusRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional StatusCategory category = 4;
+  optional string color = 5;
+}
+
+message UpdateStatusResponse {
+  Status status = 1;
+}
+
+message DeleteStatusRequest {
+  string id = 1;
+}
+
+message DeleteStatusResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ReorderStatusesRequest {
+  string workflow_id = 1;
+  repeated string status_ids = 2;  // In desired order
+}
+
+message ReorderStatusesResponse {
+  Workflow workflow = 1;
+}
+
+message CreateTransitionRequest {
+  string workflow_id = 1;
+  string name = 2;
+  string from_status_id = 3;
+  string to_status_id = 4;
+}
+
+message CreateTransitionResponse {
+  Transition transition = 1;
+}
+
+message UpdateTransitionRequest {
+  string id = 1;
+  optional string name = 2;
+  repeated TransitionRule rules = 3;
+  repeated TransitionValidator validators = 4;
+  repeated TransitionPostFunction post_functions = 5;
+}
+
+message UpdateTransitionResponse {
+  Transition transition = 1;
+}
+
+message DeleteTransitionRequest {
+  string id = 1;
+}
+
+message DeleteTransitionResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ExecuteTransitionRequest {
+  string issue_id = 1;
+  string transition_id = 2;
+  string user_id = 3;
+  map<string, string> field_updates = 4;
+  string comment = 5;
+}
+
+message ExecuteTransitionResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message GetAvailableTransitionsRequest {
+  string issue_id = 1;
+  string user_id = 2;
+}
+
+message GetAvailableTransitionsResponse {
+  repeated Transition transitions = 1;
+}

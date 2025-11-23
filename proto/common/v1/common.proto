@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package nexusflow.common.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/common/v1;commonv1";
+
+import "google/protobuf/timestamp.proto";
+
+// Pagination request parameters
+message PaginationRequest {
+  int32 page = 1;           // Page number (1-indexed)
+  int32 page_size = 2;      // Items per page (default: 20, max: 100)
+  string sort_by = 3;       // Field to sort by
+  string sort_order = 4;    // "asc" or "desc"
+}
+
+// Pagination response metadata
+message PaginationResponse {
+  int32 page = 1;           // Current page
+  int32 page_size = 2;      // Items per page
+  int64 total_items = 3;    // Total number of items
+  int32 total_pages = 4;    // Total number of pages
+  bool has_next = 5;        // Whether there's a next page
+  bool has_previous = 6;    // Whether there's a previous page
+}
+
+// Common metadata for all entities
+message Metadata {
+  string id = 1;                                    // Unique identifier (UUID)
+  string created_by = 2;                            // User ID who created
+  string updated_by = 3;                            // User ID who last updated
+  google.protobuf.Timestamp created_at = 4;         // Creation timestamp
+  google.protobuf.Timestamp updated_at = 5;         // Last update timestamp
+  string organization_id = 6;                       // Organization ID (for multi-tenancy)
+  int64 version = 7;                                // Optimistic locking version
+}
+
+// Generic error response
+message Error {
+  string code = 1;          // Error code (e.g., "INVALID_INPUT", "NOT_FOUND")
+  string message = 2;       // Human-readable error message
+  map<string, string> details = 3;  // Additional error details
+}
+
+// Generic success response
+message SuccessResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Audit log entry
+message AuditLog {
+  string id = 1;
+  string organization_id = 2;
+  string user_id = 3;
+  string action = 4;                    // e.g., "CREATE", "UPDATE", "DELETE"
+  string resource_type = 5;             // e.g., "ISSUE", "PROJECT"
+  string resource_id = 6;
+  map<string, string> changes = 7;      // What changed
+  string ip_address = 8;
+  string user_agent = 9;
+  google.protobuf.Timestamp timestamp = 10;
+}
+
+// File attachment metadata
+message Attachment {
+  string id = 1;
+  string filename = 2;
+  string content_type = 3;
+  int64 size_bytes = 4;
+  string url = 5;                       // MinIO URL
+  string thumbnail_url = 6;             // For images
+  string uploaded_by = 7;
+  google.protobuf.Timestamp uploaded_at = 8;
+}
+
+// User reference (lightweight)
+message UserRef {
+  string id = 1;
+  string email = 2;
+  string display_name = 3;
+  string avatar_url = 4;
+}
+
+// Organization reference (lightweight)
+message OrgRef {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+}
+
+// Project reference (lightweight)
+message ProjectRef {
+  string id = 1;
+  string key = 2;              // e.g., "PROJ"
+  string name = 3;
+  string organization_id = 4;
+}
+
+// Label
+message Label {
+  string id = 1;
+  string name = 2;
+  string color = 3;            // Hex color code
+  string description = 4;
+}
+
+// Comment
+message Comment {
+  string id = 1;
+  string content = 2;          // Rich text (markdown)
+  string author_id = 3;
+  UserRef author = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  repeated string mentions = 7;  // User IDs mentioned
+  map<string, int32> reactions = 8;  // emoji -> count
+}
+
+// Webhook event
+message WebhookEvent {
+  string id = 1;
+  string event_type = 2;       // e.g., "issue.created", "issue.updated"
+  string organization_id = 3;
+  string project_id = 4;
+  bytes payload = 5;           // JSON payload
+  google.protobuf.Timestamp timestamp = 6;
+}

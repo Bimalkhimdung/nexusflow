@@ -1,0 +1,315 @@
+syntax = "proto3";
+
+package nexusflow.org.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/org/v1;orgv1";
+
+import "google/protobuf/timestamp.proto";
+import "proto/common/v1/common.proto";
+import "proto/user/v1/user.proto";
+
+// Organization entity
+message Organization {
+  string id = 1;
+  string name = 2;
+  string slug = 3;                    // URL-friendly identifier
+  string description = 4;
+  string logo_url = 5;
+  OrgStatus status = 6;
+  OrgPlan plan = 7;
+  map<string, string> settings = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  int32 member_count = 11;
+  int32 project_count = 12;
+}
+
+// Organization status
+enum OrgStatus {
+  ORG_STATUS_UNSPECIFIED = 0;
+  ORG_STATUS_ACTIVE = 1;
+  ORG_STATUS_SUSPENDED = 2;
+  ORG_STATUS_DELETED = 3;
+}
+
+// Organization plan
+enum OrgPlan {
+  ORG_PLAN_UNSPECIFIED = 0;
+  ORG_PLAN_FREE = 1;
+  ORG_PLAN_TEAM = 2;
+  ORG_PLAN_ENTERPRISE = 3;
+}
+
+// Team entity
+message Team {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  string description = 4;
+  repeated string member_ids = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// Organization member
+message OrgMember {
+  string id = 1;
+  string organization_id = 2;
+  string user_id = 3;
+  nexusflow.user.v1.UserProfile user = 4;
+  OrgRole role = 5;
+  google.protobuf.Timestamp joined_at = 6;
+  repeated string team_ids = 7;
+}
+
+// Organization role
+enum OrgRole {
+  ORG_ROLE_UNSPECIFIED = 0;
+  ORG_ROLE_OWNER = 1;
+  ORG_ROLE_ADMIN = 2;
+  ORG_ROLE_MEMBER = 3;
+  ORG_ROLE_GUEST = 4;
+}
+
+// Invite
+message Invite {
+  string id = 1;
+  string organization_id = 2;
+  string email = 3;
+  OrgRole role = 4;
+  string invited_by = 5;
+  string token = 6;
+  InviteStatus status = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp expires_at = 9;
+}
+
+// Invite status
+enum InviteStatus {
+  INVITE_STATUS_UNSPECIFIED = 0;
+  INVITE_STATUS_PENDING = 1;
+  INVITE_STATUS_ACCEPTED = 2;
+  INVITE_STATUS_EXPIRED = 3;
+  INVITE_STATUS_REVOKED = 4;
+}
+
+// Organization service
+service OrgService {
+  // Organization management
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse);
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse);
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse);
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse);
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse);
+  
+  // Member management
+  rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
+  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse);
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+  
+  // Team management
+  rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse);
+  rpc GetTeam(GetTeamRequest) returns (GetTeamResponse);
+  rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse);
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse);
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse);
+  rpc AddTeamMember(AddTeamMemberRequest) returns (AddTeamMemberResponse);
+  rpc RemoveTeamMember(RemoveTeamMemberRequest) returns (RemoveTeamMemberResponse);
+  
+  // Invite management
+  rpc CreateInvite(CreateInviteRequest) returns (CreateInviteResponse);
+  rpc AcceptInvite(AcceptInviteRequest) returns (AcceptInviteResponse);
+  rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse);
+  rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse);
+}
+
+// Request/Response messages
+
+message CreateOrganizationRequest {
+  string name = 1;
+  string slug = 2;
+  string description = 3;
+}
+
+message CreateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message GetOrganizationRequest {
+  string id = 1;
+}
+
+message GetOrganizationResponse {
+  Organization organization = 1;
+}
+
+message UpdateOrganizationRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional string logo_url = 4;
+  map<string, string> settings = 5;
+}
+
+message UpdateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message DeleteOrganizationRequest {
+  string id = 1;
+}
+
+message DeleteOrganizationResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ListOrganizationsRequest {
+  nexusflow.common.v1.PaginationRequest pagination = 1;
+  string user_id = 2;
+}
+
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+  nexusflow.common.v1.PaginationResponse pagination = 2;
+}
+
+message AddMemberRequest {
+  string organization_id = 1;
+  string user_id = 2;
+  OrgRole role = 3;
+}
+
+message AddMemberResponse {
+  OrgMember member = 1;
+}
+
+message RemoveMemberRequest {
+  string organization_id = 1;
+  string user_id = 2;
+}
+
+message RemoveMemberResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message UpdateMemberRoleRequest {
+  string organization_id = 1;
+  string user_id = 2;
+  OrgRole role = 3;
+}
+
+message UpdateMemberRoleResponse {
+  OrgMember member = 1;
+}
+
+message ListMembersRequest {
+  string organization_id = 1;
+  nexusflow.common.v1.PaginationRequest pagination = 2;
+}
+
+message ListMembersResponse {
+  repeated OrgMember members = 1;
+  nexusflow.common.v1.PaginationResponse pagination = 2;
+}
+
+message CreateTeamRequest {
+  string organization_id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message CreateTeamResponse {
+  Team team = 1;
+}
+
+message GetTeamRequest {
+  string id = 1;
+}
+
+message GetTeamResponse {
+  Team team = 1;
+}
+
+message UpdateTeamRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+}
+
+message UpdateTeamResponse {
+  Team team = 1;
+}
+
+message DeleteTeamRequest {
+  string id = 1;
+}
+
+message DeleteTeamResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ListTeamsRequest {
+  string organization_id = 1;
+  nexusflow.common.v1.PaginationRequest pagination = 2;
+}
+
+message ListTeamsResponse {
+  repeated Team teams = 1;
+  nexusflow.common.v1.PaginationResponse pagination = 2;
+}
+
+message AddTeamMemberRequest {
+  string team_id = 1;
+  string user_id = 2;
+}
+
+message AddTeamMemberResponse {
+  Team team = 1;
+}
+
+message RemoveTeamMemberRequest {
+  string team_id = 1;
+  string user_id = 2;
+}
+
+message RemoveTeamMemberResponse {
+  Team team = 1;
+}
+
+message CreateInviteRequest {
+  string organization_id = 1;
+  string email = 2;
+  OrgRole role = 3;
+}
+
+message CreateInviteResponse {
+  Invite invite = 1;
+}
+
+message AcceptInviteRequest {
+  string token = 1;
+  string user_id = 2;
+}
+
+message AcceptInviteResponse {
+  OrgMember member = 1;
+}
+
+message RevokeInviteRequest {
+  string id = 1;
+}
+
+message RevokeInviteResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ListInvitesRequest {
+  string organization_id = 1;
+  nexusflow.common.v1.PaginationRequest pagination = 2;
+}
+
+message ListInvitesResponse {
+  repeated Invite invites = 1;
+  nexusflow.common.v1.PaginationResponse pagination = 2;
+}

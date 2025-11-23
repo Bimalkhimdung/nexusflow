@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package nexusflow.user.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/user/v1;userv1";
+
+import "google/protobuf/timestamp.proto";
+import "proto/common/v1/common.proto";
+
+// User entity
+message User {
+  string id = 1;
+  string email = 2;
+  string display_name = 3;
+  string avatar_url = 4;
+  string timezone = 5;
+  string locale = 6;
+  UserStatus status = 7;
+  repeated string organization_ids = 8;
+  map<string, string> preferences = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp last_login_at = 12;
+}
+
+// User status enum
+enum UserStatus {
+  USER_STATUS_UNSPECIFIED = 0;
+  USER_STATUS_ACTIVE = 1;
+  USER_STATUS_INACTIVE = 2;
+  USER_STATUS_SUSPENDED = 3;
+}
+
+// User profile (public view)
+message UserProfile {
+  string id = 1;
+  string display_name = 2;
+  string avatar_url = 3;
+  string bio = 4;
+  string location = 5;
+  string website = 6;
+}
+
+// User service definition
+service UserService {
+  // Get user by ID
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  
+  // Get user by email
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailResponse);
+  
+  // Create user
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  
+  // Update user
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  
+  // Delete user
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+  
+  // List users
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  
+  // Search users
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
+  
+  // Get user profile
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+  
+  // Update user preferences
+  rpc UpdateUserPreferences(UpdateUserPreferencesRequest) returns (UpdateUserPreferencesResponse);
+}
+
+// Request/Response messages
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message GetUserByEmailResponse {
+  User user = 1;
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string display_name = 2;
+  string avatar_url = 3;
+  string timezone = 4;
+  string locale = 5;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  optional string display_name = 2;
+  optional string avatar_url = 3;
+  optional string timezone = 4;
+  optional string locale = 5;
+  optional UserStatus status = 6;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {
+  nexusflow.common.v1.SuccessResponse response = 1;
+}
+
+message ListUsersRequest {
+  nexusflow.common.v1.PaginationRequest pagination = 1;
+  repeated string organization_ids = 2;
+  UserStatus status = 3;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  nexusflow.common.v1.PaginationResponse pagination = 2;
+}
+
+message SearchUsersRequest {
+  string query = 1;
+  nexusflow.common.v1.PaginationRequest pagination = 2;
+  repeated string organization_ids = 3;
+}
+
+message SearchUsersResponse {
+  repeated User users = 1;
+  nexusflow.common.v1.PaginationResponse pagination = 2;
+}
+
+message GetUserProfileRequest {
+  string id = 1;
+}
+
+message GetUserProfileResponse {
+  UserProfile profile = 1;
+}
+
+message UpdateUserPreferencesRequest {
+  string id = 1;
+  map<string, string> preferences = 2;
+}
+
+message UpdateUserPreferencesResponse {
+  User user = 1;
+}
