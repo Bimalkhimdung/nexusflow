@@ -1,0 +1,181 @@
+package handler
+
+import (
+	"context"
+
+	"github.com/nexusflow/nexusflow/pkg/logger"
+	commonpb "github.com/nexusflow/nexusflow/pkg/proto/common/v1"
+	pb "github.com/nexusflow/nexusflow/pkg/proto/issue/v1"
+	"github.com/nexusflow/nexusflow/services/issue-service/internal/models"
+	"github.com/nexusflow/nexusflow/services/issue-service/internal/service"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+// IssueHandler handles gRPC requests
+type IssueHandler struct {
+	pb.UnimplementedIssueServiceServer
+	service *service.IssueService
+	log     *logger.Logger
+}
+
+// NewIssueHandler creates a new issue handler
+func NewIssueHandler(service *service.IssueService, log *logger.Logger) *IssueHandler {
+	return &IssueHandler{
+		service: service,
+		log:     log,
+	}
+}
+
+// CreateIssue creates a new issue
+func (h *IssueHandler) CreateIssue(ctx context.Context, req *pb.CreateIssueRequest) (*pb.CreateIssueResponse, error) {
+	// TODO: Extract user ID from context
+	userID := "00000000-0000-0000-0000-000000000000" // Placeholder
+
+	input := service.CreateIssueInput{
+		ProjectID:   req.ProjectId,
+		Summary:     req.Summary,
+		Description: req.Description,
+		Type:        h.protoTypeToModel(req.Type),
+		Priority:    h.protoPriorityToModel(req.Priority),
+		AssigneeID:  req.AssigneeId,
+		ReporterID:  userID,
+		ParentID:    req.ParentId,
+	}
+
+	issue, err := h.service.CreateIssue(ctx, input)
+	if err != nil {
+		h.log.Sugar().Errorw("Failed to create issue", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to create issue: %v", err)
+	}
+
+	return &pb.CreateIssueResponse{
+		Issue: h.issueToProto(issue),
+	}, nil
+}
+
+// GetIssue gets an issue
+func (h *IssueHandler) GetIssue(ctx context.Context, req *pb.GetIssueRequest) (*pb.GetIssueResponse, error) {
+	issue, err := h.service.GetIssue(ctx, req.Id)
+	if err != nil {
+		h.log.Sugar().Errorw("Failed to get issue", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get issue: %v", err)
+	}
+	if issue == nil {
+		return nil, status.Error(codes.NotFound, "issue not found")
+	}
+
+	return &pb.GetIssueResponse{
+		Issue: h.issueToProto(issue),
+	}, nil
+}
+
+// GetIssueByKey gets an issue by key
+func (h *IssueHandler) GetIssueByKey(ctx context.Context, req *pb.GetIssueByKeyRequest) (*pb.GetIssueByKeyResponse, error) {
+	issue, err := h.service.GetIssueByKey(ctx, req.Key)
+	if err != nil {
+		h.log.Sugar().Errorw("Failed to get issue by key", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get issue by key: %v", err)
+	}
+	if issue == nil {
+		return nil, status.Error(codes.NotFound, "issue not found")
+	}
+
+	return &pb.GetIssueByKeyResponse{
+		Issue: h.issueToProto(issue),
+	}, nil
+}
+
+// ListIssues lists issues
+func (h *IssueHandler) ListIssues(ctx context.Context, req *pb.ListIssuesRequest) (*pb.ListIssuesResponse, error) {
+	page := 1
+	pageSize := 10
+	if req.Pagination != nil {
+		page = int(req.Pagination.Page)
+		pageSize = int(req.Pagination.PageSize)
+	}
+
+	issues, count, err := h.service.ListIssues(ctx, req.ProjectId, page, pageSize)
+	if err != nil {
+		h.log.Sugar().Errorw("Failed to list issues", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to list issues: %v", err)
+	}
+
+	var pbIssues []*pb.Issue
+	for _, i := range issues {
+		pbIssues = append(pbIssues, h.issueToProto(i))
+	}
+
+	return &pb.ListIssuesResponse{
+		Issues: pbIssues,
+		Pagination: &commonpb.PaginationResponse{
+			Page:       int32(page),
+			PageSize:   int32(pageSize),
+			TotalItems: int64(count),
+			TotalPages: int32((count + pageSize - 1) / pageSize),
+		},
+	}, nil
+}
+
+// Helpers
+
+func (h *IssueHandler) issueToProto(i *models.Issue) *pb.Issue {
+	if i == nil {
+		return nil
+	}
+	return &pb.Issue{
+		Id:          i.ID,
+		ProjectId:   i.ProjectID,
+		Key:         i.Key,
+		Summary:     i.Summary,
+		Description: i.Description,
+		// Type:        pb.IssueType(pb.IssueType_value[string(i.Type)]), // Need mapping
+		// Priority:    pb.IssuePriority(pb.IssuePriority_value[string(i.Priority)]), // Need mapping
+		StatusId:    i.StatusID,
+		AssigneeId:  i.AssigneeID,
+		ReporterId:  i.ReporterID,
+		ParentId:    i.ParentID,
+		SprintId:    i.SprintID,
+		StoryPoints: i.StoryPoints,
+		CreatedAt:   timestamppb.New(i.CreatedAt),
+		UpdatedAt:   timestamppb.New(i.UpdatedAt),
+		DueDate:     timestamppb.New(i.DueDate),
+	}
+}
+
+func (h *IssueHandler) protoTypeToModel(t pb.IssueType) models.IssueType {
+	switch t {
+	case pb.IssueType_ISSUE_TYPE_EPIC:
+		return models.IssueTypeEpic
+	case pb.IssueType_ISSUE_TYPE_STORY:
+		return models.IssueTypeStory
+	case pb.IssueType_ISSUE_TYPE_TASK:
+		return models.IssueTypeTask
+	case pb.IssueType_ISSUE_TYPE_SUB_TASK:
+		return models.IssueTypeSubTask
+	case pb.IssueType_ISSUE_TYPE_BUG:
+		return models.IssueTypeBug
+	case pb.IssueType_ISSUE_TYPE_IMPROVEMENT:
+		return models.IssueTypeImprovement
+	default:
+		return models.IssueTypeTask
+	}
+}
+
+func (h *IssueHandler) protoPriorityToModel(p pb.IssuePriority) models.IssuePriority {
+	switch p {
+	case pb.IssuePriority_ISSUE_PRIORITY_LOWEST:
+		return models.IssuePriorityLowest
+	case pb.IssuePriority_ISSUE_PRIORITY_LOW:
+		return models.IssuePriorityLow
+	case pb.IssuePriority_ISSUE_PRIORITY_MEDIUM:
+		return models.IssuePriorityMedium
+	case pb.IssuePriority_ISSUE_PRIORITY_HIGH:
+		return models.IssuePriorityHigh
+	case pb.IssuePriority_ISSUE_PRIORITY_HIGHEST:
+		return models.IssuePriorityHighest
+	default:
+		return models.IssuePriorityMedium
+	}
+}
