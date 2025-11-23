@@ -11,4 +11,6 @@ use (
 	./services/template-service
 	./services/user-service
 	./services/org-service
+	./pkg/auth
+	./pkg/rbac
 )
