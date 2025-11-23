@@ -161,3 +161,97 @@ func (r *IssueRepository) List(ctx context.Context, projectID string, limit, off
 	}
 	return issues, count, nil
 }
+
+// Custom Fields
+
+// CreateCustomField creates a new custom field
+func (r *IssueRepository) CreateCustomField(ctx context.Context, field *models.CustomField) error {
+	_, err := r.db.NewInsert().Model(field).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("create custom field: %w", err)
+	}
+	return nil
+}
+
+// GetCustomField gets a custom field by ID
+func (r *IssueRepository) GetCustomField(ctx context.Context, id string) (*models.CustomField, error) {
+	field := new(models.CustomField)
+	err := r.db.NewSelect().Model(field).Where("id = ?", id).Scan(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get custom field: %w", err)
+	}
+	return field, nil
+}
+
+// UpdateCustomField updates a custom field
+func (r *IssueRepository) UpdateCustomField(ctx context.Context, field *models.CustomField) error {
+	field.UpdatedAt = time.Now()
+	_, err := r.db.NewUpdate().Model(field).WherePK().Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("update custom field: %w", err)
+	}
+	return nil
+}
+
+// DeleteCustomField deletes a custom field
+func (r *IssueRepository) DeleteCustomField(ctx context.Context, id string) error {
+	_, err := r.db.NewDelete().Model((*models.CustomField)(nil)).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("delete custom field: %w", err)
+	}
+	return nil
+}
+
+// ListCustomFields lists custom fields for a project
+func (r *IssueRepository) ListCustomFields(ctx context.Context, projectID string) ([]*models.CustomField, error) {
+	var fields []*models.CustomField
+	err := r.db.NewSelect().
+		Model(&fields).
+		Where("project_id = ?", projectID).
+		Order("created_at ASC").
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list custom fields: %w", err)
+	}
+	return fields, nil
+}
+
+// SaveIssueCustomValues saves values for custom fields on an issue
+func (r *IssueRepository) SaveIssueCustomValues(ctx context.Context, issueID string, values []models.IssueCustomValue) error {
+	if len(values) == 0 {
+		return nil
+	}
+	
+	// Ensure issue_id is set
+	for i := range values {
+		values[i].IssueID = issueID
+	}
+
+	// Upsert values
+	_, err := r.db.NewInsert().
+		Model(&values).
+		On("CONFLICT (issue_id, field_id) DO UPDATE").
+		Set("value = EXCLUDED.value").
+		Set("updated_at = now()").
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("save issue custom values: %w", err)
+	}
+	return nil
+}
+
+// GetIssueCustomValues gets custom values for an issue
+func (r *IssueRepository) GetIssueCustomValues(ctx context.Context, issueID string) ([]*models.IssueCustomValue, error) {
+	var values []*models.IssueCustomValue
+	err := r.db.NewSelect().
+		Model(&values).
+		Where("issue_id = ?", issueID).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get issue custom values: %w", err)
+	}
+	return values, nil
+}

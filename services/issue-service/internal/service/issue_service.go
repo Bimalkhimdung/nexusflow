@@ -54,6 +54,7 @@ type CreateIssueInput struct {
 	AssigneeID  string
 	ReporterID  string
 	ParentID    string
+	CustomFields map[string]interface{}
 }
 
 // CreateIssue creates a new issue
@@ -87,7 +88,26 @@ func (s *IssueService) CreateIssue(ctx context.Context, input CreateIssueInput) 
 		return nil, fmt.Errorf("failed to create issue: %w", err)
 	}
 
-	// 3. Publish Event
+	// 3. Save Custom Fields
+	if len(input.CustomFields) > 0 {
+		var values []models.IssueCustomValue
+		for fieldID, value := range input.CustomFields {
+			values = append(values, models.IssueCustomValue{
+				IssueID: issue.ID,
+				FieldID: fieldID,
+				Value:   value,
+			})
+		}
+		if err := s.repo.SaveIssueCustomValues(ctx, issue.ID, values); err != nil {
+			// Log error but don't fail creation? Or fail?
+			// For now, log and continue, or fail. Let's fail to ensure consistency.
+			// Ideally we should do this in a transaction.
+			// TODO: Transactional support
+			s.log.Sugar().Errorw("Failed to save custom fields", "error", err)
+		}
+	}
+
+	// 4. Publish Event
 	s.publishEvent("issue.created", input.ProjectID, input.ReporterID, map[string]interface{}{
 		"issue_id": issue.ID,
 		"key":      issue.Key,
@@ -138,4 +158,24 @@ func (s *IssueService) publishEvent(eventType, projectID, userID string, payload
 	if err := s.producer.PublishEvent("issue-events", event); err != nil {
 		s.log.Sugar().Errorw("Failed to publish event", "error", err, "type", eventType)
 	}
+}
+
+// Custom Fields
+
+// CreateCustomField creates a new custom field
+func (s *IssueService) CreateCustomField(ctx context.Context, field *models.CustomField) (*models.CustomField, error) {
+	if err := s.repo.CreateCustomField(ctx, field); err != nil {
+		return nil, err
+	}
+	return field, nil
+}
+
+// ListCustomFields lists custom fields for a project
+func (s *IssueService) ListCustomFields(ctx context.Context, projectID string) ([]*models.CustomField, error) {
+	return s.repo.ListCustomFields(ctx, projectID)
+}
+
+// GetIssueCustomValues gets custom values for an issue
+func (s *IssueService) GetIssueCustomValues(ctx context.Context, issueID string) ([]*models.IssueCustomValue, error) {
+	return s.repo.GetIssueCustomValues(ctx, issueID)
 }

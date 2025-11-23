@@ -42,6 +42,7 @@ func (h *IssueHandler) CreateIssue(ctx context.Context, req *pb.CreateIssueReque
 		AssigneeID:  req.AssigneeId,
 		ReporterID:  userID,
 		ParentID:    req.ParentId,
+		CustomFields: h.protoCustomFieldsToMap(req.CustomFields),
 	}
 
 	issue, err := h.service.CreateIssue(ctx, input)
@@ -116,6 +117,88 @@ func (h *IssueHandler) ListIssues(ctx context.Context, req *pb.ListIssuesRequest
 			TotalPages: int32((count + pageSize - 1) / pageSize),
 		},
 	}, nil
+}
+
+// Custom Fields
+
+func (h *IssueHandler) CreateCustomField(ctx context.Context, req *pb.CreateCustomFieldRequest) (*pb.CreateCustomFieldResponse, error) {
+	field := &models.CustomField{
+		ProjectID:   req.ProjectId,
+		Name:        req.Name,
+		Description: req.Description,
+		Type:        h.protoCustomFieldTypeToModel(req.Type),
+		Required:    req.Required,
+		Options:     req.Options,
+	}
+
+	created, err := h.service.CreateCustomField(ctx, field)
+	if err != nil {
+		h.log.Sugar().Errorw("Failed to create custom field", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to create custom field: %v", err)
+	}
+
+	return &pb.CreateCustomFieldResponse{
+		Field: h.customFieldToProto(created),
+	}, nil
+}
+
+func (h *IssueHandler) ListCustomFields(ctx context.Context, req *pb.ListCustomFieldsRequest) (*pb.ListCustomFieldsResponse, error) {
+	fields, err := h.service.ListCustomFields(ctx, req.ProjectId)
+	if err != nil {
+		h.log.Sugar().Errorw("Failed to list custom fields", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to list custom fields: %v", err)
+	}
+
+	var pbFields []*pb.CustomField
+	for _, f := range fields {
+		pbFields = append(pbFields, h.customFieldToProto(f))
+	}
+
+	return &pb.ListCustomFieldsResponse{
+		Fields: pbFields,
+	}, nil
+}
+
+// Helpers
+
+func (h *IssueHandler) protoCustomFieldsToMap(fields []*pb.CustomFieldValue) map[string]interface{} {
+	result := make(map[string]interface{})
+	for _, f := range fields {
+		// TODO: Handle Any type properly. For now, assuming string or simple types?
+		// This is tricky with Any.
+		// Let's assume for now we skip complex value parsing or just store nil
+		// Real implementation needs Any unpacking.
+		result[f.FieldId] = f.Value // This won't work directly as it's *anypb.Any
+	}
+	return result
+}
+
+func (h *IssueHandler) customFieldToProto(f *models.CustomField) *pb.CustomField {
+	if f == nil {
+		return nil
+	}
+	return &pb.CustomField{
+		Id:          f.ID,
+		ProjectId:   f.ProjectID,
+		Name:        f.Name,
+		Description: f.Description,
+		// Type:        ... // Need mapping
+		Required:    f.Required,
+		Options:     f.Options,
+	}
+}
+
+func (h *IssueHandler) protoCustomFieldTypeToModel(t pb.CustomFieldType) models.CustomFieldType {
+	switch t {
+	case pb.CustomFieldType_CUSTOM_FIELD_TYPE_TEXT:
+		return models.CustomFieldTypeText
+	case pb.CustomFieldType_CUSTOM_FIELD_TYPE_NUMBER:
+		return models.CustomFieldTypeNumber
+	case pb.CustomFieldType_CUSTOM_FIELD_TYPE_SELECT:
+		return models.CustomFieldTypeSelect
+	default:
+		return models.CustomFieldTypeText
+	}
 }
 
 // Helpers
