@@ -10,4 +10,5 @@ use (
 	./pkg/proto
 	./services/template-service
 	./services/user-service
+	./services/org-service
 )
