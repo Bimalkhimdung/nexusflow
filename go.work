@@ -13,4 +13,5 @@ use (
 	./services/org-service
 	./pkg/auth
 	./pkg/rbac
+	./services/project-service
 )
