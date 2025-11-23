@@ -80,6 +80,11 @@ func (db *DB) Ping(ctx context.Context) error {
 	return db.DB.PingContext(ctx)
 }
 
+// GetSQLDB returns the underlying sql.DB
+func (db *DB) GetSQLDB() *sql.DB {
+	return db.DB.DB
+}
+
 // BeginTx starts a new transaction
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (bun.Tx, error) {
 	return db.DB.BeginTx(ctx, opts)
@@ -138,8 +143,8 @@ type BaseModel struct {
 	OrganizationID string    `bun:"organization_id,notnull"`
 	CreatedAt      time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 	UpdatedAt      time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
-	CreatedBy      string    `bun:"created_by"`
-	UpdatedBy      string    `bun:"updated_by"`
+	CreatedBy      string    `bun:"created_by,nullzero"`
+	UpdatedBy      string    `bun:"updated_by,nullzero"`
 	Version        int64     `bun:"version,notnull,default:1"`
 }
 

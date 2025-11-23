@@ -1,4 +1,6 @@
-go 1.24
+go 1.24.0
+
+toolchain go1.24.6
 
 use (
 	./pkg/config
@@ -7,4 +9,5 @@ use (
 	./pkg/logger
 	./pkg/proto
 	./services/template-service
+	./services/user-service
 )
