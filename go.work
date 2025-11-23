@@ -15,4 +15,5 @@ use (
 	./pkg/rbac
 	./services/project-service
 	./services/issue-service
+	./services/workflow-service
 )

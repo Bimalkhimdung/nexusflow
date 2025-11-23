@@ -117,6 +117,55 @@ func (s *IssueService) CreateIssue(ctx context.Context, input CreateIssueInput) 
 	return issue, nil
 }
 
+// UpdateIssueInput represents input for updating an issue
+type UpdateIssueInput struct {
+	ID          string
+	Summary     *string
+	Description *string
+	StatusID    *string
+	AssigneeID  *string
+	Priority    *models.IssuePriority
+}
+
+// UpdateIssue updates an issue
+func (s *IssueService) UpdateIssue(ctx context.Context, input UpdateIssueInput) (*models.Issue, error) {
+	issue, err := s.repo.GetByID(ctx, input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get issue: %w", err)
+	}
+	if issue == nil {
+		return nil, fmt.Errorf("issue not found")
+	}
+
+	if input.Summary != nil {
+		issue.Summary = *input.Summary
+	}
+	if input.Description != nil {
+		issue.Description = *input.Description
+	}
+	if input.StatusID != nil {
+		issue.StatusID = *input.StatusID
+	}
+	if input.AssigneeID != nil {
+		issue.AssigneeID = *input.AssigneeID
+	}
+	if input.Priority != nil {
+		issue.Priority = *input.Priority
+	}
+
+	if err := s.repo.Update(ctx, issue); err != nil {
+		return nil, fmt.Errorf("failed to update issue: %w", err)
+	}
+
+	// Publish event
+	s.publishEvent("issue.updated", issue.ProjectID, "system", map[string]interface{}{
+		"issue_id": issue.ID,
+		"key":      issue.Key,
+	})
+
+	return issue, nil
+}
+
 // GetIssue gets an issue by ID
 func (s *IssueService) GetIssue(ctx context.Context, id string) (*models.Issue, error) {
 	return s.repo.GetByID(ctx, id)

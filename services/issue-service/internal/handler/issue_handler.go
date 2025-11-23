@@ -56,6 +56,36 @@ func (h *IssueHandler) CreateIssue(ctx context.Context, req *pb.CreateIssueReque
 	}, nil
 }
 
+// UpdateIssue updates an issue
+func (h *IssueHandler) UpdateIssue(ctx context.Context, req *pb.UpdateIssueRequest) (*pb.UpdateIssueResponse, error) {
+	input := service.UpdateIssueInput{
+		ID: req.Id,
+	}
+	if req.Summary != nil {
+		input.Summary = req.Summary
+	}
+	if req.Description != nil {
+		input.Description = req.Description
+	}
+	if req.StatusId != nil {
+		input.StatusID = req.StatusId
+	}
+	if req.AssigneeId != nil {
+		input.AssigneeID = req.AssigneeId
+	}
+	// Priority handling if needed
+
+	issue, err := h.service.UpdateIssue(ctx, input)
+	if err != nil {
+		h.log.Sugar().Errorw("Failed to update issue", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to update issue: %v", err)
+	}
+
+	return &pb.UpdateIssueResponse{
+		Issue: h.issueToProto(issue),
+	}, nil
+}
+
 // GetIssue gets an issue
 func (h *IssueHandler) GetIssue(ctx context.Context, req *pb.GetIssueRequest) (*pb.GetIssueResponse, error) {
 	issue, err := h.service.GetIssue(ctx, req.Id)
