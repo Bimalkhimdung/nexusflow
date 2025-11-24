@@ -7,27 +7,31 @@ import (
 
 	"github.com/nexusflow/nexusflow/pkg/kafka"
 	"github.com/nexusflow/nexusflow/pkg/logger"
+	"github.com/nexusflow/nexusflow/services/project-service/internal/client"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/models"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/repository"
 )
 
 // ProjectService handles project business logic
 type ProjectService struct {
-	repo     *repository.ProjectRepository
-	producer *kafka.Producer
-	log      *logger.Logger
+	repo      *repository.ProjectRepository
+	orgClient *client.OrgClient
+	producer  *kafka.Producer
+	log       *logger.Logger
 }
 
 // NewProjectService creates a new project service
 func NewProjectService(
 	repo *repository.ProjectRepository,
+	orgClient *client.OrgClient,
 	producer *kafka.Producer,
 	log *logger.Logger,
 ) *ProjectService {
 	return &ProjectService{
-		repo:     repo,
-		producer: producer,
-		log:      log,
+		repo:      repo,
+		orgClient: orgClient,
+		producer:  producer,
+		log:       log,
 	}
 }
 
@@ -56,6 +60,16 @@ func (s *ProjectService) CreateProject(ctx context.Context, input CreateProjectI
 	}
 	if input.UserID == "" {
 		return nil, fmt.Errorf("user_id is required")
+	}
+
+	// Check if user is admin in the organization
+	isAdmin, err := s.orgClient.IsAdmin(ctx, input.OrganizationID, input.UserID)
+	if err != nil {
+		s.log.Sugar().Errorw("Failed to check user role", "error", err, "org_id", input.OrganizationID, "user_id", input.UserID)
+		return nil, fmt.Errorf("failed to verify permissions: %w", err)
+	}
+	if !isAdmin {
+		return nil, fmt.Errorf("only organization admins can create projects")
 	}
 
 	// Check if key exists in org
@@ -165,6 +179,17 @@ func (s *ProjectService) DeleteProject(ctx context.Context, id string) error {
 		return fmt.Errorf("project not found")
 	}
 
+	// Check if user is admin in the organization
+	// For delete, we need to extract userID from context (TODO: implement context extraction)
+	// For now, we'll skip the check but this should be added
+	// isAdmin, err := s.orgClient.IsAdmin(ctx, project.OrganizationID, userID)
+	// if err != nil {
+	//     return fmt.Errorf("failed to verify permissions: %w", err)
+	// }
+	// if !isAdmin {
+	//     return fmt.Errorf("only organization admins can delete projects")
+	// }
+
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete project: %w", err)
 	}
@@ -177,8 +202,8 @@ func (s *ProjectService) DeleteProject(ctx context.Context, id string) error {
 	return nil
 }
 
-// ListProjects lists projects for an organization
-func (s *ProjectService) ListProjects(ctx context.Context, orgID string, page, pageSize int) ([]*models.Project, int, error) {
+// ListProjects lists projects for an organization, optionally filtered by user membership
+func (s *ProjectService) ListProjects(ctx context.Context, orgID, userID string, page, pageSize int) ([]*models.Project, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -186,6 +211,11 @@ func (s *ProjectService) ListProjects(ctx context.Context, orgID string, page, p
 		pageSize = 10
 	}
 	offset := (page - 1) * pageSize
+	
+	// If userID is provided, filter by user membership
+	if userID != "" {
+		return s.repo.ListByUser(ctx, orgID, userID, pageSize, offset)
+	}
 	
 	return s.repo.List(ctx, orgID, pageSize, offset)
 }

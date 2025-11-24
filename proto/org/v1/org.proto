@@ -7,6 +7,7 @@ option go_package = "github.com/nexusflow/nexusflow/pkg/proto/org/v1;orgv1";
 import "google/protobuf/timestamp.proto";
 import "proto/common/v1/common.proto";
 import "proto/user/v1/user.proto";
+import "google/api/annotations.proto";
 
 // Organization entity
 message Organization {
@@ -96,17 +97,62 @@ enum InviteStatus {
 // Organization service
 service OrgService {
   // Organization management
-  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse);
-  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse);
-  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse);
-  rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse);
-  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse);
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {
+    option (google.api.http) = {
+      post: "/v1/organizations"
+      body: "*"
+    };
+  }
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse) {
+    option (google.api.http) = {
+      get: "/v1/organizations/{id}"
+    };
+  }
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse) {
+    option (google.api.http) = {
+      patch: "/v1/organizations/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse) {
+    option (google.api.http) = {
+      delete: "/v1/organizations/{id}"
+    };
+  }
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/organizations"
+    };
+  }
   
   // Member management
-  rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
-  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
-  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse);
-  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+  rpc AddMember(AddMemberRequest) returns (AddMemberResponse) {
+    option (google.api.http) = {
+      post: "/v1/organizations/{organization_id}/members"
+      body: "*"
+    };
+  }
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse) {
+    option (google.api.http) = {
+      delete: "/v1/organizations/{organization_id}/members/{user_id}"
+    };
+  }
+  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse) {
+    option (google.api.http) = {
+      patch: "/v1/organizations/{organization_id}/members/{user_id}/role"
+      body: "*"
+    };
+  }
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/organizations/{organization_id}/members"
+    };
+  }
+  rpc GetMemberRole(GetMemberRoleRequest) returns (GetMemberRoleResponse) {
+    option (google.api.http) = {
+      get: "/v1/organizations/{organization_id}/members/{user_id}/role"
+    };
+  }
   
   // Team management
   rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse);
@@ -118,10 +164,28 @@ service OrgService {
   rpc RemoveTeamMember(RemoveTeamMemberRequest) returns (RemoveTeamMemberResponse);
   
   // Invite management
-  rpc CreateInvite(CreateInviteRequest) returns (CreateInviteResponse);
-  rpc AcceptInvite(AcceptInviteRequest) returns (AcceptInviteResponse);
-  rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse);
-  rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse);
+  rpc CreateInvite(CreateInviteRequest) returns (CreateInviteResponse) {
+    option (google.api.http) = {
+      post: "/v1/organizations/{organization_id}/invites"
+      body: "*"
+    };
+  }
+  rpc AcceptInvite(AcceptInviteRequest) returns (AcceptInviteResponse) {
+    option (google.api.http) = {
+      post: "/v1/invites/{token}/accept"
+      body: "*"
+    };
+  }
+  rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse) {
+    option (google.api.http) = {
+      delete: "/v1/invites/{id}"
+    };
+  }
+  rpc ListInvites(ListInvitesRequest) returns (ListInvitesResponse) {
+    option (google.api.http) = {
+      get: "/v1/organizations/{organization_id}/invites"
+    };
+  }
 }
 
 // Request/Response messages
@@ -211,6 +275,16 @@ message ListMembersRequest {
 message ListMembersResponse {
   repeated OrgMember members = 1;
   nexusflow.common.v1.PaginationResponse pagination = 2;
+}
+
+message GetMemberRoleRequest {
+  string organization_id = 1;
+  string user_id = 2;
+}
+
+message GetMemberRoleResponse {
+  OrgRole role = 1;
+  bool is_member = 2;
 }
 
 message CreateTeamRequest {

@@ -100,25 +100,25 @@ service ProjectService {
     };
   }
   
-  // Member management
-  rpc AddMember(AddMemberRequest) returns (AddMemberResponse) {
+  // Project member management
+  rpc AddProjectMember(AddProjectMemberRequest) returns (AddProjectMemberResponse) {
     option (google.api.http) = {
       post: "/v1/projects/{project_id}/members"
       body: "*"
     };
   }
-  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse) {
+  rpc RemoveProjectMember(RemoveProjectMemberRequest) returns (RemoveProjectMemberResponse) {
     option (google.api.http) = {
       delete: "/v1/projects/{project_id}/members/{user_id}"
     };
   }
-  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse) {
+  rpc UpdateProjectMemberRole(UpdateProjectMemberRoleRequest) returns (UpdateProjectMemberRoleResponse) {
     option (google.api.http) = {
       patch: "/v1/projects/{project_id}/members/{user_id}"
       body: "*"
     };
   }
-  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {
+  rpc ListProjectMembers(ListProjectMembersRequest) returns (ListProjectMembersResponse) {
     option (google.api.http) = {
       get: "/v1/projects/{project_id}/members"
     };
@@ -198,41 +198,41 @@ message ArchiveProjectResponse {
   Project project = 1;
 }
 
-message AddMemberRequest {
+message AddProjectMemberRequest {
   string project_id = 1;
   string user_id = 2;
   ProjectRole role = 3;
 }
 
-message AddMemberResponse {
+message AddProjectMemberResponse {
   ProjectMember member = 1;
 }
 
-message RemoveMemberRequest {
+message RemoveProjectMemberRequest {
   string project_id = 1;
   string user_id = 2;
 }
 
-message RemoveMemberResponse {
+message RemoveProjectMemberResponse {
   nexusflow.common.v1.SuccessResponse response = 1;
 }
 
-message UpdateMemberRoleRequest {
+message UpdateProjectMemberRoleRequest {
   string project_id = 1;
   string user_id = 2;
   ProjectRole role = 3;
 }
 
-message UpdateMemberRoleResponse {
+message UpdateProjectMemberRoleResponse {
   ProjectMember member = 1;
 }
 
-message ListMembersRequest {
+message ListProjectMembersRequest {
   string project_id = 1;
   nexusflow.common.v1.PaginationRequest pagination = 2;
 }
 
-message ListMembersResponse {
+message ListProjectMembersResponse {
   repeated ProjectMember members = 1;
   nexusflow.common.v1.PaginationResponse pagination = 2;
 }

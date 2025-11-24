@@ -22,6 +22,7 @@ import (
 	"github.com/nexusflow/nexusflow/pkg/kafka"
 	"github.com/nexusflow/nexusflow/pkg/logger"
 	pb "github.com/nexusflow/nexusflow/pkg/proto/project/v1"
+	"github.com/nexusflow/nexusflow/services/project-service/internal/client"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/handler"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/repository"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/service"
@@ -87,7 +88,15 @@ func main() {
 
 	// Initialize layers
 	repo := repository.NewProjectRepository(db, log)
-	svc := service.NewProjectService(repo, producer, log)
+	
+	// Initialize org-service client
+	orgClient, err := client.NewOrgClient("localhost:50052", log)
+	if err != nil {
+		log.Sugar().Fatalw("Failed to create org-service client", "error", err)
+	}
+	defer orgClient.Close()
+	
+	svc := service.NewProjectService(repo, orgClient, producer, log)
 	h := handler.NewProjectHandler(svc, log)
 
 	// Create gRPC server
