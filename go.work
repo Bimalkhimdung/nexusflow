@@ -19,4 +19,5 @@ use (
 	./services/board-service
 	./services/sprint-service
 	./services/comment-service
+	./services/notification-service
 )

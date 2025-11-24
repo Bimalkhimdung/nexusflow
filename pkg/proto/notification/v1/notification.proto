@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package notification.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/notification/v1;";
+
+message Notification {
+  string id = 1;
+  string user_id = 2;
+  string type = 3;
+  string title = 4;
+  string message = 5;
+  string link = 6;
+  string metadata = 7;
+  bool read = 8;
+  string created_at = 9;
+}
+
+message NotificationPreference {
+  string id = 1;
+  string user_id = 2;
+  string notification_type = 3;
+  bool in_app_enabled = 4;
+  bool email_enabled = 5;
+}
+
+message ListNotificationsRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  int32 total = 2;
+}
+
+message MarkAsReadRequest {
+  string notification_id = 1;
+}
+message MarkAsReadResponse {}
+
+message MarkAllAsReadRequest {
+  string user_id = 1;
+}
+message MarkAllAsReadResponse {}
+
+message GetUnreadCountRequest {
+  string user_id = 1;
+}
+message GetUnreadCountResponse {
+  int32 count = 1;
+}
+
+message GetPreferencesRequest {
+  string user_id = 1;
+}
+message GetPreferencesResponse {
+  repeated NotificationPreference preferences = 1;
+}
+
+message UpdatePreferenceRequest {
+  string user_id = 1;
+  string notification_type = 2;
+  bool in_app_enabled = 3;
+  bool email_enabled = 4;
+}
+message UpdatePreferenceResponse {
+  NotificationPreference preference = 1;
+}
+
+service NotificationService {
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc MarkAsRead(MarkAsReadRequest) returns (MarkAsReadResponse);
+  rpc MarkAllAsRead(MarkAllAsReadRequest) returns (MarkAllAsReadResponse);
+  rpc GetUnreadCount(GetUnreadCountRequest) returns (GetUnreadCountResponse);
+  rpc GetPreferences(GetPreferencesRequest) returns (GetPreferencesResponse);
+  rpc UpdatePreference(UpdatePreferenceRequest) returns (UpdatePreferenceResponse);
+}
