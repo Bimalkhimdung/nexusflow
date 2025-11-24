@@ -17,4 +17,5 @@ use (
 	./services/issue-service
 	./services/workflow-service
 	./services/board-service
+	./services/sprint-service
 )

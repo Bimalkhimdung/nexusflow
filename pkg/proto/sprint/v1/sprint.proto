@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package sprint.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/sprint/v1;";
+
+enum SprintStatus {
+  SPRINT_STATUS_PLANNED = 0;
+  SPRINT_STATUS_ACTIVE = 1;
+  SPRINT_STATUS_COMPLETED = 2;
+}
+
+message Sprint {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  string goal = 4;
+  string start_date = 5;
+  string end_date = 6;
+  SprintStatus status = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message CreateSprintRequest {
+  string project_id = 1;
+  string name = 2;
+  string goal = 3;
+  string start_date = 4;
+  string end_date = 5;
+}
+message CreateSprintResponse {
+  Sprint sprint = 1;
+}
+
+message GetSprintRequest {
+  string id = 1;
+}
+message GetSprintResponse {
+  Sprint sprint = 1;
+}
+
+message ListSprintsRequest {
+  string project_id = 1;
+  SprintStatus status = 2;
+}
+message ListSprintsResponse {
+  repeated Sprint sprints = 1;
+}
+
+message UpdateSprintRequest {
+  string id = 1;
+  string name = 2;
+  string goal = 3;
+  string start_date = 4;
+  string end_date = 5;
+}
+message UpdateSprintResponse {
+  Sprint sprint = 1;
+}
+
+message DeleteSprintRequest {
+  string id = 1;
+}
+message DeleteSprintResponse {}
+
+message AddIssueToSprintRequest {
+  string sprint_id = 1;
+  string issue_id = 2;
+}
+message AddIssueToSprintResponse {}
+
+message RemoveIssueFromSprintRequest {
+  string sprint_id = 1;
+  string issue_id = 2;
+}
+message RemoveIssueFromSprintResponse {}
+
+message StartSprintRequest {
+  string sprint_id = 1;
+}
+message StartSprintResponse {
+  Sprint sprint = 1;
+}
+
+message CompleteSprintRequest {
+  string sprint_id = 1;
+}
+message CompleteSprintResponse {
+  Sprint sprint = 1;
+}
+
+message GetSprintIssuesRequest {
+  string sprint_id = 1;
+}
+message GetSprintIssuesResponse {
+  repeated string issue_ids = 1;
+}
+
+service SprintService {
+  rpc CreateSprint(CreateSprintRequest) returns (CreateSprintResponse);
+  rpc GetSprint(GetSprintRequest) returns (GetSprintResponse);
+  rpc ListSprints(ListSprintsRequest) returns (ListSprintsResponse);
+  rpc UpdateSprint(UpdateSprintRequest) returns (UpdateSprintResponse);
+  rpc DeleteSprint(DeleteSprintRequest) returns (DeleteSprintResponse);
+  rpc AddIssueToSprint(AddIssueToSprintRequest) returns (AddIssueToSprintResponse);
+  rpc RemoveIssueFromSprint(RemoveIssueFromSprintRequest) returns (RemoveIssueFromSprintResponse);
+  rpc StartSprint(StartSprintRequest) returns (StartSprintResponse);
+  rpc CompleteSprint(CompleteSprintRequest) returns (CompleteSprintResponse);
+  rpc GetSprintIssues(GetSprintIssuesRequest) returns (GetSprintIssuesResponse);
+}
