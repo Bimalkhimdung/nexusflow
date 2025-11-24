@@ -1,0 +1,32 @@
+name: Backend CI
+
+on:
+  push:
+    paths: ['services/**', 'pkg/**', 'go.work', 'go.mod']
+  pull_request:
+    paths: ['services/**', 'pkg/**', 'go.work', 'go.mod']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          
+      - name: Verify dependencies
+        run: go mod verify
+        
+      - name: Run tests
+        run: go test -v ./...
+        
+      - name: Build services
+        run: |
+          for dir in services/*; do
+            if [ -d "$dir" ]; then
+              echo "Building $dir..."
+              (cd "$dir" && go build ./...)
+            fi
+          done
