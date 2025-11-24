@@ -20,4 +20,5 @@ use (
 	./services/sprint-service
 	./services/comment-service
 	./services/notification-service
+	./services/search-service
 )
