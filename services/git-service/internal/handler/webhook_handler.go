@@ -1,15 +1,10 @@
 package handler
 
 import (
-	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/nexusflow/nexusflow/pkg/logger"
@@ -57,7 +52,6 @@ type GitHubPushPayload struct {
 
 func (h *WebhookHandler) HandleGitHub(w http.ResponseWriter, r *http.Request) {
 	eventType := r.Header.Get("X-GitHub-Event")
-	signature := r.Header.Get("X-Hub-Signature-256")
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -106,18 +100,4 @@ func (h *WebhookHandler) HandleGitHub(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func verifySignature(payload []byte, secret, signature string) bool {
-	if !strings.HasPrefix(signature, "sha256=") {
-		return false
-	}
-	sig := signature[7:] // Remove "sha256=" prefix
-
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write(payload)
-	expectedMAC := mac.Sum(nil)
-	expectedSig := hex.EncodeToString(expectedMAC)
-
-	return hmac.Equal([]byte(sig), []byte(expectedSig))
 }

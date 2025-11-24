@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/nexusflow/nexusflow/pkg/kafka"
