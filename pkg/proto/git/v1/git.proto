@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package git.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/git/v1;";
+
+message ConnectRepositoryRequest {
+  string project_id = 1;
+  string name = 2;
+  string url = 3;
+  string provider = 4; // github, gitlab
+  string external_id = 5;
+  string webhook_secret = 6;
+}
+
+message ConnectRepositoryResponse {
+  string repository_id = 1;
+  string webhook_url = 2;
+}
+
+message ListRepositoriesRequest {
+  string project_id = 1;
+}
+
+message Repository {
+  string id = 1;
+  string name = 2;
+  string url = 3;
+  string provider = 4;
+  string created_at = 5;
+}
+
+message ListRepositoriesResponse {
+  repeated Repository repositories = 1;
+}
+
+message GetIssueCommitsRequest {
+  string issue_id = 1;
+}
+
+message Commit {
+  string id = 1;
+  string hash = 2;
+  string message = 3;
+  string author_name = 4;
+  string url = 5;
+  string committed_at = 6;
+}
+
+message GetIssueCommitsResponse {
+  repeated Commit commits = 1;
+}
+
+message GetIssuePullRequestsRequest {
+  string issue_id = 1;
+}
+
+message PullRequest {
+  string id = 1;
+  string external_id = 2;
+  string title = 3;
+  string status = 4;
+  string url = 5;
+  string author_name = 6;
+  string updated_at = 7;
+}
+
+message GetIssuePullRequestsResponse {
+  repeated PullRequest pull_requests = 1;
+}
+
+service GitService {
+  rpc ConnectRepository(ConnectRepositoryRequest) returns (ConnectRepositoryResponse);
+  rpc ListRepositories(ListRepositoriesRequest) returns (ListRepositoriesResponse);
+  rpc GetIssueCommits(GetIssueCommitsRequest) returns (GetIssueCommitsResponse);
+  rpc GetIssuePullRequests(GetIssuePullRequestsRequest) returns (GetIssuePullRequestsResponse);
+}
