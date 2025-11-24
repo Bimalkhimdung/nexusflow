@@ -21,4 +21,5 @@ use (
 	./services/comment-service
 	./services/notification-service
 	./services/search-service
+	./services/attachment-service
 )

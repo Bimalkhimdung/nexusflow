@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package attachment.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/attachment/v1;";
+
+message Attachment {
+  string id = 1;
+  string entity_type = 2;
+  string entity_id = 3;
+  string filename = 4;
+  string original_filename = 5;
+  string content_type = 6;
+  int64 size = 7;
+  string uploader_id = 8;
+  string created_at = 9;
+}
+
+message UploadAttachmentRequest {
+  oneof data {
+    AttachmentMetadata metadata = 1;
+    bytes chunk = 2;
+  }
+}
+
+message AttachmentMetadata {
+  string entity_type = 1;
+  string entity_id = 2;
+  string filename = 3;
+  string content_type = 4;
+  string uploader_id = 5;
+}
+
+message UploadAttachmentResponse {
+  Attachment attachment = 1;
+}
+
+message GetAttachmentRequest {
+  string id = 1;
+}
+
+message GetAttachmentResponse {
+  Attachment attachment = 1;
+}
+
+message GetDownloadURLRequest {
+  string attachment_id = 1;
+}
+
+message GetDownloadURLResponse {
+  string url = 1;
+  int64 expires_in = 2;
+}
+
+message ListAttachmentsRequest {
+  string entity_type = 1;
+  string entity_id = 2;
+}
+
+message ListAttachmentsResponse {
+  repeated Attachment attachments = 1;
+}
+
+message DeleteAttachmentRequest {
+  string attachment_id = 1;
+}
+
+message DeleteAttachmentResponse {}
+
+service AttachmentService {
+  rpc UploadAttachment(stream UploadAttachmentRequest) returns (UploadAttachmentResponse);
+  rpc GetAttachment(GetAttachmentRequest) returns (GetAttachmentResponse);
+  rpc GetDownloadURL(GetDownloadURLRequest) returns (GetDownloadURLResponse);
+  rpc ListAttachments(ListAttachmentsRequest) returns (ListAttachmentsResponse);
+  rpc DeleteAttachment(DeleteAttachmentRequest) returns (DeleteAttachmentResponse);
+}
