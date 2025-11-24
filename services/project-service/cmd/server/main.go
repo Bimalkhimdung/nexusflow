@@ -21,6 +21,7 @@ import (
 	"github.com/nexusflow/nexusflow/pkg/database"
 	"github.com/nexusflow/nexusflow/pkg/kafka"
 	"github.com/nexusflow/nexusflow/pkg/logger"
+	"github.com/nexusflow/nexusflow/pkg/middleware"
 	pb "github.com/nexusflow/nexusflow/pkg/proto/project/v1"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/client"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/handler"
@@ -99,10 +100,10 @@ func main() {
 	svc := service.NewProjectService(repo, orgClient, producer, log)
 	h := handler.NewProjectHandler(svc, log)
 
-	// Create gRPC server
+	// Create gRPC server with auth interceptor
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			// Add interceptors here
+			middleware.AuthInterceptor(),
 		),
 	)
 

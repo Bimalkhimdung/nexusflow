@@ -7,6 +7,7 @@ import (
 
 	"github.com/nexusflow/nexusflow/pkg/kafka"
 	"github.com/nexusflow/nexusflow/pkg/logger"
+	"github.com/nexusflow/nexusflow/pkg/middleware"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/client"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/models"
 	"github.com/nexusflow/nexusflow/services/project-service/internal/repository"
@@ -180,15 +181,17 @@ func (s *ProjectService) DeleteProject(ctx context.Context, id string) error {
 	}
 
 	// Check if user is admin in the organization
-	// For delete, we need to extract userID from context (TODO: implement context extraction)
-	// For now, we'll skip the check but this should be added
-	// isAdmin, err := s.orgClient.IsAdmin(ctx, project.OrganizationID, userID)
-	// if err != nil {
-	//     return fmt.Errorf("failed to verify permissions: %w", err)
-	// }
-	// if !isAdmin {
-	//     return fmt.Errorf("only organization admins can delete projects")
-	// }
+	userID := middleware.GetUserIDFromContextOrDefault(ctx, "")
+	if userID != "" {
+		isAdmin, err := s.orgClient.IsAdmin(ctx, project.OrganizationID, userID)
+		if err != nil {
+			s.log.Sugar().Errorw("Failed to check user role", "error", err, "org_id", project.OrganizationID, "user_id", userID)
+			return fmt.Errorf("failed to verify permissions: %w", err)
+		}
+		if !isAdmin {
+			return fmt.Errorf("only organization admins can delete projects")
+		}
+	}
 
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete project: %w", err)

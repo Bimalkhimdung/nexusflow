@@ -21,6 +21,7 @@ import (
 	"github.com/nexusflow/nexusflow/pkg/database"
 	"github.com/nexusflow/nexusflow/pkg/kafka"
 	"github.com/nexusflow/nexusflow/pkg/logger"
+	"github.com/nexusflow/nexusflow/pkg/middleware"
 	pb "github.com/nexusflow/nexusflow/pkg/proto/org/v1"
 	"github.com/nexusflow/nexusflow/services/org-service/internal/handler"
 	"github.com/nexusflow/nexusflow/services/org-service/internal/repository"
@@ -93,10 +94,10 @@ func main() {
 	orgService := service.NewOrgService(orgRepo, teamRepo, inviteRepo, producer, log)
 	orgHandler := handler.NewOrgHandler(orgService, log)
 
-	// Create gRPC server
+	// Create gRPC server with auth interceptor
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
-			// Add interceptors here
+			middleware.AuthInterceptor(),
 		),
 	)
 
