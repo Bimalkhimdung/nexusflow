@@ -226,6 +226,25 @@ func (h *OrgHandler) ListMembers(ctx context.Context, req *pb.ListMembersRequest
 	}, nil
 }
 
+// GetMemberRole gets a member's role
+func (h *OrgHandler) GetMemberRole(ctx context.Context, req *pb.GetMemberRoleRequest) (*pb.GetMemberRoleResponse, error) {
+	role, isMember, err := h.service.GetMemberRole(ctx, req.OrganizationId, req.UserId)
+	if err != nil {
+		h.log.Sugar().Errorw("Failed to get member role", "error", err)
+		return nil, status.Errorf(codes.Internal, "failed to get member role: %v", err)
+	}
+
+	var protoRole pb.OrgRole
+	if isMember {
+		protoRole = h.modelRoleToProto(role)
+	}
+
+	return &pb.GetMemberRoleResponse{
+		Role:     protoRole,
+		IsMember: isMember,
+	}, nil
+}
+
 // CreateTeam creates a team
 func (h *OrgHandler) CreateTeam(ctx context.Context, req *pb.CreateTeamRequest) (*pb.CreateTeamResponse, error) {
 	team, err := h.service.CreateTeam(ctx, req.OrganizationId, req.Name, req.Description)
@@ -493,5 +512,20 @@ func (h *OrgHandler) protoRoleToModel(role pb.OrgRole) models.OrgRole {
 		return models.OrgRoleGuest
 	default:
 		return models.OrgRoleMember
+	}
+}
+
+func (h *OrgHandler) modelRoleToProto(role models.OrgRole) pb.OrgRole {
+	switch role {
+	case models.OrgRoleOwner:
+		return pb.OrgRole_ORG_ROLE_OWNER
+	case models.OrgRoleAdmin:
+		return pb.OrgRole_ORG_ROLE_ADMIN
+	case models.OrgRoleMember:
+		return pb.OrgRole_ORG_ROLE_MEMBER
+	case models.OrgRoleGuest:
+		return pb.OrgRole_ORG_ROLE_GUEST
+	default:
+		return pb.OrgRole_ORG_ROLE_MEMBER
 	}
 }

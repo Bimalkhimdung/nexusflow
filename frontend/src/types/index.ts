@@ -3,6 +3,40 @@ export interface User {
     email: string;
     fullName: string;
     role: string;
+    avatarUrl?: string;
+    phone?: string;
+    address?: string;
+    bio?: string;
+}
+
+export interface Organization {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    logoUrl?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface OrgMember {
+    id: string;
+    organizationId: string;
+    userId: string;
+    role: 'owner' | 'admin' | 'member' | 'guest';
+    joinedAt: string;
+}
+
+export interface Invite {
+    id: string;
+    organizationId: string;
+    email: string;
+    role: 'admin' | 'member';
+    invitedBy: string;
+    token: string;
+    status: 'pending' | 'accepted' | 'expired' | 'revoked';
+    createdAt: string;
+    expiresAt: string;
 }
 
 export interface Project {

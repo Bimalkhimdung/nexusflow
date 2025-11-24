@@ -134,6 +134,12 @@ func (h *ProjectHandler) DeleteProject(ctx context.Context, req *pb.DeleteProjec
 
 // ListProjects lists projects
 func (h *ProjectHandler) ListProjects(ctx context.Context, req *pb.ListProjectsRequest) (*pb.ListProjectsResponse, error) {
+	// TODO: Extract user ID from context for proper filtering
+	userID := req.UserId // Use from request for now
+	if userID == "" {
+		userID = "00000000-0000-0000-0000-000000000000" // Placeholder
+	}
+
 	page := 1
 	pageSize := 10
 	if req.Pagination != nil {
@@ -141,7 +147,7 @@ func (h *ProjectHandler) ListProjects(ctx context.Context, req *pb.ListProjectsR
 		pageSize = int(req.Pagination.PageSize)
 	}
 
-	projects, count, err := h.service.ListProjects(ctx, req.OrganizationId, page, pageSize)
+	projects, count, err := h.service.ListProjects(ctx, req.OrganizationId, userID, page, pageSize)
 	if err != nil {
 		h.log.Sugar().Errorw("Failed to list projects", "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to list projects: %v", err)
@@ -176,8 +182,8 @@ func (h *ProjectHandler) ArchiveProject(ctx context.Context, req *pb.ArchiveProj
 	}, nil
 }
 
-// AddMember adds a member
-func (h *ProjectHandler) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.AddMemberResponse, error) {
+// AddProjectMember adds a member to a project
+func (h *ProjectHandler) AddProjectMember(ctx context.Context, req *pb.AddProjectMemberRequest) (*pb.AddProjectMemberResponse, error) {
 	role := h.protoRoleToModel(req.Role)
 
 	member, err := h.service.AddMember(ctx, req.ProjectId, req.UserId, role)
@@ -186,27 +192,27 @@ func (h *ProjectHandler) AddMember(ctx context.Context, req *pb.AddMemberRequest
 		return nil, status.Errorf(codes.Internal, "failed to add member: %v", err)
 	}
 
-	return &pb.AddMemberResponse{
+	return &pb.AddProjectMemberResponse{
 		Member: h.memberToProto(member),
 	}, nil
 }
 
-// RemoveMember removes a member
-func (h *ProjectHandler) RemoveMember(ctx context.Context, req *pb.RemoveMemberRequest) (*pb.RemoveMemberResponse, error) {
+// RemoveProjectMember removes a member from a project
+func (h *ProjectHandler) RemoveProjectMember(ctx context.Context, req *pb.RemoveProjectMemberRequest) (*pb.RemoveProjectMemberResponse, error) {
 	if err := h.service.RemoveMember(ctx, req.ProjectId, req.UserId); err != nil {
 		h.log.Sugar().Errorw("Failed to remove member", "error", err)
 		return nil, status.Errorf(codes.Internal, "failed to remove member: %v", err)
 	}
 
-	return &pb.RemoveMemberResponse{
+	return &pb.RemoveProjectMemberResponse{
 		Response: &commonpb.SuccessResponse{
 			Success: true,
 		},
 	}, nil
 }
 
-// UpdateMemberRole updates a member role
-func (h *ProjectHandler) UpdateMemberRole(ctx context.Context, req *pb.UpdateMemberRoleRequest) (*pb.UpdateMemberRoleResponse, error) {
+// UpdateProjectMemberRole updates a member's role
+func (h *ProjectHandler) UpdateProjectMemberRole(ctx context.Context, req *pb.UpdateProjectMemberRoleRequest) (*pb.UpdateProjectMemberRoleResponse, error) {
 	role := h.protoRoleToModel(req.Role)
 
 	member, err := h.service.UpdateMemberRole(ctx, req.ProjectId, req.UserId, role)
@@ -215,13 +221,13 @@ func (h *ProjectHandler) UpdateMemberRole(ctx context.Context, req *pb.UpdateMem
 		return nil, status.Errorf(codes.Internal, "failed to update member role: %v", err)
 	}
 
-	return &pb.UpdateMemberRoleResponse{
+	return &pb.UpdateProjectMemberRoleResponse{
 		Member: h.memberToProto(member),
 	}, nil
 }
 
-// ListMembers lists members
-func (h *ProjectHandler) ListMembers(ctx context.Context, req *pb.ListMembersRequest) (*pb.ListMembersResponse, error) {
+// ListProjectMembers lists members of a project
+func (h *ProjectHandler) ListProjectMembers(ctx context.Context, req *pb.ListProjectMembersRequest) (*pb.ListProjectMembersResponse, error) {
 	page := 1
 	pageSize := 10
 	if req.Pagination != nil {
@@ -240,7 +246,7 @@ func (h *ProjectHandler) ListMembers(ctx context.Context, req *pb.ListMembersReq
 		pbMembers = append(pbMembers, h.memberToProto(m))
 	}
 
-	return &pb.ListMembersResponse{
+	return &pb.ListProjectMembersResponse{
 		Members: pbMembers,
 		Pagination: &commonpb.PaginationResponse{
 			Page:       int32(page),

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Issue, Project, User } from '../types';
+import { Issue, Project, User, Organization, OrgMember, Invite } from '../types';
 import api from '../services/api';
 
 // Hardcoded organization ID for demo purposes (replace with dynamic value as needed)
@@ -7,6 +7,11 @@ const ORG_ID = 'e5616b48-3cdf-4812-a54f-fd861d1ff062';
 
 interface AppState {
     user: User | null;
+    userRole: 'owner' | 'admin' | 'member' | 'guest' | null;
+    organizations: Organization[];
+    currentOrganization: Organization | null;
+    orgMembers: OrgMember[];
+    invites: Invite[];
     projects: Project[];
     currentProject: Project | null;
     issues: Issue[];
@@ -16,6 +21,7 @@ interface AppState {
     setProjects: (projects: Project[]) => void;
     setCurrentProject: (project: Project | null) => void;
     setIssues: (issues: Issue[]) => void;
+    setCurrentOrganization: (org: Organization | null) => void;
 
     createProject: (project: Partial<Project>) => Promise<void>;
     updateProject: (projectId: string, project: Partial<Project>) => Promise<void>;
@@ -24,6 +30,17 @@ interface AppState {
     fetchIssues: (projectId: string) => Promise<void>;
     createIssue: (issue: Partial<Issue>) => Promise<void>;
     updateIssue: (issueId: string, issue: Partial<Issue>) => Promise<void>;
+
+    // Organization & Member Management
+    fetchUserRole: (orgId: string) => Promise<void>;
+    fetchOrganizations: () => Promise<void>;
+    fetchOrgMembers: (orgId: string) => Promise<void>;
+    inviteMember: (orgId: string, email: string, role: 'admin' | 'member') => Promise<void>;
+    removeMember: (orgId: string, userId: string) => Promise<void>;
+    fetchInvites: (orgId: string) => Promise<void>;
+    revokeInvite: (inviteId: string) => Promise<void>;
+    addProjectMember: (projectId: string, userId: string, role: string) => Promise<void>;
+    removeProjectMember: (projectId: string, userId: string) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -33,6 +50,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         fullName: 'Demo User',
         role: 'ADMIN'
     }, // Mock user for now
+    userRole: 'admin', // Mock role
+    organizations: [],
+    currentOrganization: null,
+    orgMembers: [],
+    invites: [],
     projects: [],
     currentProject: null,
     issues: [],
@@ -42,6 +64,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     setProjects: (projects) => set({ projects }),
     setCurrentProject: (currentProject) => set({ currentProject }),
     setIssues: (issues) => set({ issues }),
+    setCurrentOrganization: (currentOrganization) => set({ currentOrganization }),
 
     createProject: async (project: Partial<Project>) => {
         set({ loading: true });
@@ -174,5 +197,102 @@ export const useAppStore = create<AppState>((set, get) => ({
             }
             throw error;
         }
-    }
+    },
+
+    // Organization & Member Management Actions
+    fetchUserRole: async (orgId: string) => {
+        try {
+            const userId = get().user?.id;
+            if (!userId) return;
+
+            const response = await api.get(`/organizations/${orgId}/members/${userId}/role`);
+            set({ userRole: response.data.role });
+        } catch (error) {
+            console.error('Failed to fetch user role', error);
+            set({ userRole: null });
+        }
+    },
+
+    fetchOrganizations: async () => {
+        try {
+            const userId = get().user?.id;
+            if (!userId) return;
+
+            const response = await api.get(`/organizations?user_id=${userId}`);
+            set({ organizations: response.data.organizations || [] });
+        } catch (error) {
+            console.error('Failed to fetch organizations', error);
+        }
+    },
+
+    fetchOrgMembers: async (orgId: string) => {
+        try {
+            const response = await api.get(`/organizations/${orgId}/members`);
+            set({ orgMembers: response.data.members || [] });
+        } catch (error) {
+            console.error('Failed to fetch org members', error);
+        }
+    },
+
+    inviteMember: async (orgId: string, email: string, role: 'admin' | 'member') => {
+        try {
+            await api.post(`/organizations/${orgId}/invites`, { email, role });
+            // Refresh invites list
+            await get().fetchInvites(orgId);
+        } catch (error) {
+            console.error('Failed to invite member', error);
+            throw error;
+        }
+    },
+
+    removeMember: async (orgId: string, userId: string) => {
+        try {
+            await api.delete(`/organizations/${orgId}/members/${userId}`);
+            // Refresh members list
+            await get().fetchOrgMembers(orgId);
+        } catch (error) {
+            console.error('Failed to remove member', error);
+            throw error;
+        }
+    },
+
+    fetchInvites: async (orgId: string) => {
+        try {
+            const response = await api.get(`/organizations/${orgId}/invites`);
+            set({ invites: response.data.invites || [] });
+        } catch (error) {
+            console.error('Failed to fetch invites', error);
+        }
+    },
+
+    revokeInvite: async (inviteId: string) => {
+        try {
+            await api.delete(`/invites/${inviteId}`);
+            // Remove from local state
+            set((state) => ({
+                invites: state.invites.filter(inv => inv.id !== inviteId)
+            }));
+        } catch (error) {
+            console.error('Failed to revoke invite', error);
+            throw error;
+        }
+    },
+
+    addProjectMember: async (projectId: string, userId: string, role: string) => {
+        try {
+            await api.post(`/projects/${projectId}/members`, { user_id: userId, role });
+        } catch (error) {
+            console.error('Failed to add project member', error);
+            throw error;
+        }
+    },
+
+    removeProjectMember: async (projectId: string, userId: string) => {
+        try {
+            await api.delete(`/projects/${projectId}/members/${userId}`);
+        } catch (error) {
+            console.error('Failed to remove project member', error);
+            throw error;
+        }
+    },
 }));

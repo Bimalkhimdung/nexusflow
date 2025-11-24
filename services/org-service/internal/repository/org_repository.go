@@ -210,6 +210,33 @@ func (r *OrgRepository) ListMembers(ctx context.Context, orgID string, limit, of
 	return members, count, nil
 }
 
+// GetMemberRole gets a member's role in an organization
+func (r *OrgRepository) GetMemberRole(ctx context.Context, orgID, userID string) (models.OrgRole, bool, error) {
+	member, err := r.GetMember(ctx, orgID, userID)
+	if err != nil {
+		return "", false, err
+	}
+	if member == nil {
+		return "", false, nil
+	}
+	return member.Role, true, nil
+}
+
+// IsFirstUser checks if this is the first user in the organization
+func (r *OrgRepository) IsFirstUser(ctx context.Context, orgID string) (bool, error) {
+	count, err := r.db.NewSelect().
+		Model((*models.OrgMember)(nil)).
+		Where("organization_id = ?", orgID).
+		Count(ctx)
+		
+	if err != nil {
+		r.log.Sugar().Errorw("Failed to count members", "error", err, "org_id", orgID)
+		return false, fmt.Errorf("count members: %w", err)
+	}
+	
+	return count == 0, nil
+}
+
 // CreateWithMember creates an organization and adds the creator as owner in a transaction
 func (r *OrgRepository) CreateWithMember(ctx context.Context, org *models.Organization, userID string) error {
 	return r.db.RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {

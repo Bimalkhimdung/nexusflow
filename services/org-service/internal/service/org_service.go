@@ -238,6 +238,11 @@ func (s *OrgService) ListMembers(ctx context.Context, orgID string, page, pageSi
 	return s.orgRepo.ListMembers(ctx, orgID, pageSize, offset)
 }
 
+// GetMemberRole gets a member's role in an organization
+func (s *OrgService) GetMemberRole(ctx context.Context, orgID, userID string) (models.OrgRole, bool, error) {
+	return s.orgRepo.GetMemberRole(ctx, orgID, userID)
+}
+
 // CreateTeam creates a new team
 func (s *OrgService) CreateTeam(ctx context.Context, orgID, name, description string) (*models.Team, error) {
 	team := &models.Team{

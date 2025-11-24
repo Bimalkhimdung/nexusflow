@@ -64,6 +64,20 @@ type OrgMember struct {
 	UpdatedAt      time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
 }
 
+// ProjectMember represents a project member
+type ProjectMember struct {
+	bun.BaseModel `bun:"table:project_members,alias:pm"`
+
+	ID        string    `bun:"id,pk,type:uuid,default:gen_random_uuid()"`
+	ProjectID string    `bun:"project_id,notnull,type:uuid"`
+	UserID    string    `bun:"user_id,notnull,type:uuid"`
+	Role      string    `bun:"role,notnull,default:'member'"`
+	AddedBy   string    `bun:"added_by,type:uuid"`
+	AddedAt   time.Time `bun:"added_at,nullzero,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+}
+
 // Team represents a team within an organization
 type Team struct {
 	bun.BaseModel `bun:"table:teams,alias:t"`

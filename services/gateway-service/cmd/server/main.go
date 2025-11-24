@@ -11,6 +11,7 @@ import (
 
 	projectv1 "github.com/nexusflow/nexusflow/pkg/proto/project/v1"
 	issuev1 "github.com/nexusflow/nexusflow/pkg/proto/issue/v1"
+	orgv1 "github.com/nexusflow/nexusflow/pkg/proto/org/v1"
 )
 
 func main() {
@@ -35,6 +36,13 @@ func main() {
 	err = issuev1.RegisterIssueServiceHandlerFromEndpoint(ctx, mux, "localhost:50054", opts)
 	if err != nil {
 		log.Fatalf("Failed to register issue service handler: %v", err)
+	}
+
+	// Register Org Service
+	// Assuming org-service runs on localhost:50052
+	err = orgv1.RegisterOrgServiceHandlerFromEndpoint(ctx, mux, "localhost:50052", opts)
+	if err != nil {
+		log.Fatalf("Failed to register org service handler: %v", err)
 	}
 
 	// Register other services here as we add annotations...

@@ -126,6 +126,29 @@ func (r *ProjectRepository) List(ctx context.Context, orgID string, limit, offse
 	return projects, count, nil
 }
 
+// ListByUser lists projects for a user (filtered by membership)
+func (r *ProjectRepository) ListByUser(ctx context.Context, orgID, userID string, limit, offset int) ([]*models.Project, int, error) {
+	var projects []*models.Project
+	
+	// Join with project_members to filter by user membership
+	count, err := r.db.NewSelect().
+		Model(&projects).
+		Join("INNER JOIN project_members AS pm ON pm.project_id = p.id").
+		Where("p.organization_id = ?", orgID).
+		Where("pm.user_id = ?", userID).
+		Order("p.created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		ScanAndCount(ctx)
+		
+	if err != nil {
+		r.log.Sugar().Errorw("Failed to list projects by user", "error", err, "org_id", orgID, "user_id", userID)
+		return nil, 0, fmt.Errorf("list projects by user: %w", err)
+	}
+	
+	return projects, count, nil
+}
+
 // AddMember adds a member to a project
 func (r *ProjectRepository) AddMember(ctx context.Context, member *models.ProjectMember) error {
 	if member.ID == "" {
