@@ -24,7 +24,7 @@ const COLUMNS = [
 type IssueFormValues = z.infer<typeof issueSchema>;
 
 export function Board() {
-    const { issues, setIssues, fetchIssues, createIssue, projects, currentProject, fetchProjects } = useAppStore();
+    const { issues, setIssues, fetchIssues, createIssue, projects, currentProject, fetchProjects, updateIssue } = useAppStore();
     const [columns, setColumns] = useState<{ [key: string]: Issue[] }>({});
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<IssueFormValues>({
@@ -92,7 +92,10 @@ export function Board() {
             setIssues(newIssues);
         }
 
-        // TODO: Call API to update status
+        // Call API to update status
+        updateIssue(draggableId, {
+            status: destination.droppableId as 'TODO' | 'IN_PROGRESS' | 'DONE'
+        });
     };
 
     const onSubmit = async (data: IssueFormValues) => {

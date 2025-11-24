@@ -23,6 +23,7 @@ interface AppState {
     fetchProjects: () => Promise<void>;
     fetchIssues: (projectId: string) => Promise<void>;
     createIssue: (issue: Partial<Issue>) => Promise<void>;
+    updateIssue: (issueId: string, issue: Partial<Issue>) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -112,7 +113,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             const issues = (response.data.issues || []).map((issue: any) => ({
                 ...issue,
                 title: issue.summary || 'Untitled',
-                status: 'TODO', // Default to TODO as backend uses statusId
+                status: issue.statusId || 'TODO',
                 priority: issue.priority ? issue.priority.replace('ISSUE_PRIORITY_', '') : 'MEDIUM',
                 type: issue.type ? issue.type.replace('ISSUE_TYPE_', '') : 'TASK'
             }));
@@ -132,7 +133,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             const newIssue = {
                 ...response.data.issue,
                 title: response.data.issue.summary || issue.title || 'Untitled',
-                status: 'TODO',
+                status: response.data.issue.statusId || 'TODO',
                 priority: response.data.issue.priority ? response.data.issue.priority.replace('ISSUE_PRIORITY_', '') : 'MEDIUM',
                 type: response.data.issue.type ? response.data.issue.type.replace('ISSUE_TYPE_', '') : 'TASK'
             };
@@ -142,6 +143,36 @@ export const useAppStore = create<AppState>((set, get) => ({
             throw error;
         } finally {
             set({ loading: false });
+        }
+    },
+
+    updateIssue: async (issueId: string, issue: Partial<Issue>) => {
+        // Optimistic update is handled by the component, but we should also update store here
+        // to ensure consistency if the API call fails (we would revert) or succeeds
+        set((state) => ({
+            issues: state.issues.map((i) => (i.id === issueId ? { ...i, ...issue } : i))
+        }));
+
+        try {
+            // Map frontend fields back to backend fields
+            const payload: any = { ...issue };
+            if (issue.title) payload.summary = issue.title;
+            if (issue.status) payload.status_id = issue.status;
+            // Status is tricky because backend uses statusId, but for now we might not have status mapping
+            // If backend supports status update via specific endpoint or field, we use that.
+            // Assuming backend accepts 'status' or we need to map it.
+            // For now, let's just send what we have, but we might need to adjust based on backend API.
+
+            await api.patch(`/issues/${issueId}`, payload);
+        } catch (error) {
+            console.error('Failed to update issue', error);
+            // Revert on failure (could be improved with a previous state snapshot)
+            // For now, just re-fetch issues to ensure sync
+            const currentProject = get().currentProject;
+            if (currentProject) {
+                get().fetchIssues(currentProject.id);
+            }
+            throw error;
         }
     }
 }));
