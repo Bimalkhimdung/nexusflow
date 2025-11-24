@@ -3,6 +3,10 @@ export interface User {
     email: string;
     fullName: string;
     role: string;
+    avatarUrl?: string;
+    phone?: string;
+    address?: string;
+    bio?: string;
 }
 
 export interface Organization {
