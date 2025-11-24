@@ -18,4 +18,5 @@ use (
 	./services/workflow-service
 	./services/board-service
 	./services/sprint-service
+	./services/comment-service
 )

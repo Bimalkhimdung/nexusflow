@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package comment.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/comment/v1;";
+
+message Comment {
+  string id = 1;
+  string issue_id = 2;
+  string author_id = 3;
+  string parent_id = 4;
+  string content = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  bool is_deleted = 8;
+}
+
+message Reaction {
+  string id = 1;
+  string comment_id = 2;
+  string user_id = 3;
+  string emoji = 4;
+  string created_at = 5;
+}
+
+message CreateCommentRequest {
+  string issue_id = 1;
+  string author_id = 2;
+  string parent_id = 3;
+  string content = 4;
+}
+message CreateCommentResponse {
+  Comment comment = 1;
+}
+
+message GetCommentRequest {
+  string id = 1;
+}
+message GetCommentResponse {
+  Comment comment = 1;
+}
+
+message ListCommentsRequest {
+  string issue_id = 1;
+}
+message ListCommentsResponse {
+  repeated Comment comments = 1;
+}
+
+message UpdateCommentRequest {
+  string id = 1;
+  string content = 2;
+}
+message UpdateCommentResponse {
+  Comment comment = 1;
+}
+
+message DeleteCommentRequest {
+  string id = 1;
+}
+message DeleteCommentResponse {}
+
+message AddReactionRequest {
+  string comment_id = 1;
+  string user_id = 2;
+  string emoji = 3;
+}
+message AddReactionResponse {}
+
+message RemoveReactionRequest {
+  string comment_id = 1;
+  string user_id = 2;
+  string emoji = 3;
+}
+message RemoveReactionResponse {}
+
+message ListReactionsRequest {
+  string comment_id = 1;
+}
+message ListReactionsResponse {
+  repeated Reaction reactions = 1;
+}
+
+service CommentService {
+  rpc CreateComment(CreateCommentRequest) returns (CreateCommentResponse);
+  rpc GetComment(GetCommentRequest) returns (GetCommentResponse);
+  rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse);
+  rpc UpdateComment(UpdateCommentRequest) returns (UpdateCommentResponse);
+  rpc DeleteComment(DeleteCommentRequest) returns (DeleteCommentResponse);
+  rpc AddReaction(AddReactionRequest) returns (AddReactionResponse);
+  rpc RemoveReaction(RemoveReactionRequest) returns (RemoveReactionResponse);
+  rpc ListReactions(ListReactionsRequest) returns (ListReactionsResponse);
+}
