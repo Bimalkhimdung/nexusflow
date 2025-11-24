@@ -69,12 +69,20 @@ run-all:
 	@echo "Starting all services..."
 	@echo "Make sure infrastructure is running: make infra-up"
 	@for service in services/*-service; do \
-		if [ -d "$$service" ]; then \
+		if [ -d "$$service" ] && [ "$$(basename $$service)" != "gateway-service" ]; then \
 			echo "Starting $$service..."; \
-			cd $$service && go run ./cmd/server & cd ../..; \
+			(cd $$service && go run ./cmd/server > ../../$$(basename $$service).log 2>&1 &); \
 		fi \
 	done
-	@echo "All services started. Press Ctrl+C to stop."
+	@echo "Starting gateway-service..."
+	@(cd services/gateway-service && go run ./cmd/server > ../../gateway.log 2>&1 &)
+	@echo "All services started. Check *.log files for output."
+
+# Stop all services
+stop-all:
+	@echo "Stopping all services..."
+	@pkill -f "go run ./cmd/server" || true
+	@echo "All services stopped."
 
 # Build Docker images
 docker-build:

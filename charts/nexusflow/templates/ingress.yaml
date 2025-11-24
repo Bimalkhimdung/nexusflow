@@ -1,0 +1,25 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "nexusflow.fullname" . }}
+  labels:
+    {{- include "nexusflow.labels" . | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ if eq .service "frontend" }}{{ include "nexusflow.fullname" $ }}-frontend{{ else }}{{ include "nexusflow.fullname" $ }}-gateway{{ end }}
+                port:
+                  number: {{ if eq .service "frontend" }}{{ $.Values.frontend.service.port }}{{ else }}8080{{ end }}
+          {{- end }}
+    {{- end }}
+{{- end }}

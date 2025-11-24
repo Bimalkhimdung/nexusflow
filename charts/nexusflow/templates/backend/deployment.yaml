@@ -1,0 +1,39 @@
+{{- range .Values.backend.services }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nexusflow.fullname" $ }}-{{ .name }}
+  labels:
+    {{- include "nexusflow.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ .name }}
+spec:
+  replicas: {{ $.Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "nexusflow.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ .name }}
+  template:
+    metadata:
+      labels:
+        {{- include "nexusflow.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ .name }}
+    spec:
+      containers:
+        - name: {{ .name }}
+          image: "{{ $.Values.backend.image.repository }}:{{ $.Values.backend.image.tag }}"
+          imagePullPolicy: {{ $.Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .port }}
+              protocol: TCP
+          env:
+            - name: SERVICE_NAME
+              value: {{ .name }}
+            - name: PORT
+              value: "{{ .port }}"
+            - name: ENV
+              value: {{ $.Values.global.environment }}
+          resources:
+            {{- toYaml $.Values.backend.resources | nindent 12 }}
+---
+{{- end }}

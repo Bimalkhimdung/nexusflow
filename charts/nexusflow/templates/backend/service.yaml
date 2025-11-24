@@ -1,0 +1,20 @@
+{{- range .Values.backend.services }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nexusflow.fullname" $ }}-{{ .name }}
+  labels:
+    {{- include "nexusflow.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ .name }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "nexusflow.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ .name }}
+---
+{{- end }}

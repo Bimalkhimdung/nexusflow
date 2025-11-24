@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { Issue, Project, User } from '../types';
+import api from '../services/api';
 
+// Hardcoded organization ID for demo purposes (replace with dynamic value as needed)
+const ORG_ID = 'e5616b48-3cdf-4812-a54f-fd861d1ff062';
 
 interface AppState {
     user: User | null;
@@ -14,11 +17,15 @@ interface AppState {
     setCurrentProject: (project: Project | null) => void;
     setIssues: (issues: Issue[]) => void;
 
+    createProject: (project: Partial<Project>) => Promise<void>;
+    updateProject: (projectId: string, project: Partial<Project>) => Promise<void>;
+    deleteProject: (projectId: string) => Promise<void>;
     fetchProjects: () => Promise<void>;
     fetchIssues: (projectId: string) => Promise<void>;
+    createIssue: (issue: Partial<Issue>) => Promise<void>;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
     user: {
         id: '1',
         email: 'demo@nexusflow.io',
@@ -35,23 +42,64 @@ export const useAppStore = create<AppState>((set) => ({
     setCurrentProject: (currentProject) => set({ currentProject }),
     setIssues: (issues) => set({ issues }),
 
+    createProject: async (project: Partial<Project>) => {
+        set({ loading: true });
+        try {
+            const response = await api.post('/projects', { ...project, organization_id: ORG_ID });
+            set((state) => ({ projects: [...state.projects, response.data.project] }));
+        } catch (error) {
+            console.error('Failed to create project', error);
+            throw error;
+        } finally {
+            set({ loading: false });
+        }
+    },
+
+    deleteProject: async (projectId: string) => {
+        set({ loading: true });
+        try {
+            await api.delete(`/projects/${projectId}`);
+            set((state) => ({
+                projects: state.projects.filter(p => p.id !== projectId),
+                currentProject: state.currentProject?.id === projectId ? null : state.currentProject
+            }));
+        } catch (error) {
+            console.error('Failed to delete project', error);
+            throw error;
+        } finally {
+            set({ loading: false });
+        }
+    },
+
+    updateProject: async (projectId: string, project: Partial<Project>) => {
+        set({ loading: true });
+        try {
+            const response = await api.patch(`/projects/${projectId}`, project);
+            set((state) => ({
+                projects: state.projects.map(p =>
+                    p.id === projectId ? response.data.project : p
+                ),
+                currentProject: state.currentProject?.id === projectId ? response.data.project : state.currentProject
+            }));
+        } catch (error) {
+            console.error('Failed to update project', error);
+            throw error;
+        } finally {
+            set({ loading: false });
+        }
+    },
+
     fetchProjects: async () => {
         set({ loading: true });
         try {
-            // Mock data for now until backend is fully connected via gateway
-            const mockProjects: Project[] = [
-                {
-                    id: '1',
-                    name: 'NexusFlow',
-                    key: 'NEX',
-                    description: 'Project Management System',
-                    ownerId: '1',
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            set({ projects: mockProjects, currentProject: mockProjects[0] });
+            const response = await api.get(`/projects?organization_id=${ORG_ID}`);
+            set({ projects: response.data.projects || [] });
+            if (response.data.projects && response.data.projects.length > 0 && !get().currentProject) {
+                set({ currentProject: response.data.projects[0] });
+            }
         } catch (error) {
             console.error('Failed to fetch projects', error);
+            set({ projects: [] }); // Ensure projects is always an array
         } finally {
             set({ loading: false });
         }
@@ -60,38 +108,23 @@ export const useAppStore = create<AppState>((set) => ({
     fetchIssues: async (projectId) => {
         set({ loading: true });
         try {
-            // Mock data
-            const mockIssues: Issue[] = [
-                {
-                    id: '1',
-                    key: 'NEX-1',
-                    title: 'Implement Frontend',
-                    description: 'Build the React frontend',
-                    status: 'IN_PROGRESS',
-                    priority: 'HIGH',
-                    type: 'STORY',
-                    reporterId: '1',
-                    projectId: projectId,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: '2',
-                    key: 'NEX-2',
-                    title: 'Design Database',
-                    description: 'Create schema',
-                    status: 'DONE',
-                    priority: 'MEDIUM',
-                    type: 'TASK',
-                    reporterId: '1',
-                    projectId: projectId,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ];
-            set({ issues: mockIssues });
+            const response = await api.get(`/projects/${projectId}/issues`);
+            set({ issues: response.data });
         } catch (error) {
             console.error('Failed to fetch issues', error);
+        } finally {
+            set({ loading: false });
+        }
+    },
+
+    createIssue: async (issue: Partial<Issue>) => {
+        set({ loading: true });
+        try {
+            const response = await api.post(`/projects/${issue.projectId}/issues`, issue);
+            set((state) => ({ issues: [...state.issues, response.data] }));
+        } catch (error) {
+            console.error('Failed to create issue', error);
+            throw error;
         } finally {
             set({ loading: false });
         }

@@ -1,0 +1,71 @@
+global:
+  environment: dev
+
+frontend:
+  image:
+    repository: nexusflow/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+backend:
+  image:
+    repository: nexusflow/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  services:
+    - name: user-service
+      port: 8081
+    - name: project-service
+      port: 8082
+    - name: issue-service
+      port: 8083
+    - name: board-service
+      port: 8084
+    - name: sprint-service
+      port: 8085
+    - name: comment-service
+      port: 8086
+    - name: notification-service
+      port: 8087
+    - name: search-service
+      port: 8088
+    - name: attachment-service
+      port: 8089
+    - name: workflow-service
+      port: 8090
+    - name: org-service
+      port: 8091
+    - name: git-service
+      port: 8092
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: nexusflow.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: gateway

@@ -11,7 +11,12 @@ echo "🔍 Verifying Go modules..."
 go mod verify
 
 echo "🧪 Running Go tests..."
-go test ./...
+for dir in services/* pkg/*; do
+  if [ -d "$dir" ] && [ -f "$dir/go.mod" ]; then
+    echo "   Testing $(basename $dir)..."
+    (cd "$dir" && go test ./...)
+  fi
+done
 
 echo "🏗️  Building Services..."
 for dir in services/*; do

@@ -25,30 +25,34 @@ if ! command -v protoc-gen-go &> /dev/null; then
     exit 1
 fi
 
-# Check if protoc-gen-go-grpc is installed
-if ! command -v protoc-gen-go-grpc &> /dev/null; then
-    echo "Error: protoc-gen-go-grpc is not installed"
-    echo "Install with: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest"
-    exit 1
+# Check if protoc-gen-grpc-gateway is installed
+if ! command -v protoc-gen-grpc-gateway &> /dev/null; then
+    echo "Installing protoc-gen-grpc-gateway..."
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
+    go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 fi
 
 # Create output directory
 rm -rf pkg/proto/proto
 mkdir -p pkg/proto
 
-# Find all .proto files
-PROTO_FILES=$(find proto -name "*.proto")
+# Find all .proto files (excluding google/api)
+PROTO_FILES=$(find proto -name "*.proto" | grep -v "proto/google")
+PKG_PROTO_FILES=$(find pkg/proto -name "*.proto")
 
 # Generate Go code for each proto file
-for proto_file in $PROTO_FILES; do
+for proto_file in $PROTO_FILES $PKG_PROTO_FILES; do
     echo -e "${BLUE}Generating code for $proto_file${NC}"
     
     protoc \
         --go_out=. \
-        --go_opt=module=github.com/nexusflow/nexusflow/pkg/proto \
+        --go_opt=module=github.com/nexusflow/nexusflow \
         --go-grpc_out=. \
-        --go-grpc_opt=module=github.com/nexusflow/nexusflow/pkg/proto \
+        --go-grpc_opt=module=github.com/nexusflow/nexusflow \
+        --grpc-gateway_out=. \
+        --grpc-gateway_opt=module=github.com/nexusflow/nexusflow \
         --proto_path=. \
+        --proto_path=proto \
         "$proto_file"
 done
 

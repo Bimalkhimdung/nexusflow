@@ -6,6 +6,7 @@ option go_package = "github.com/nexusflow/nexusflow/pkg/proto/project/v1;project
 
 import "google/protobuf/timestamp.proto";
 import "proto/common/v1/common.proto";
+import "google/api/annotations.proto";
 
 // Project entity
 message Project {
@@ -60,19 +61,68 @@ enum ProjectRole {
 // Project service
 service ProjectService {
   // Project management
-  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
-  rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
-  rpc GetProjectByKey(GetProjectByKeyRequest) returns (GetProjectByKeyResponse);
-  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
-  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
-  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
-  rpc ArchiveProject(ArchiveProjectRequest) returns (ArchiveProjectResponse);
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects"
+      body: "*"
+    };
+  }
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{id}"
+    };
+  }
+  rpc GetProjectByKey(GetProjectByKeyRequest) returns (GetProjectByKeyResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/key/{key}"
+    };
+  }
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse) {
+    option (google.api.http) = {
+      patch: "/v1/projects/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {
+    option (google.api.http) = {
+      delete: "/v1/projects/{id}"
+    };
+  }
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects"
+    };
+  }
+  rpc ArchiveProject(ArchiveProjectRequest) returns (ArchiveProjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{id}/archive"
+      body: "*"
+    };
+  }
   
   // Member management
-  rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
-  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
-  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse);
-  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+  rpc AddMember(AddMemberRequest) returns (AddMemberResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id}/members"
+      body: "*"
+    };
+  }
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse) {
+    option (google.api.http) = {
+      delete: "/v1/projects/{project_id}/members/{user_id}"
+    };
+  }
+  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse) {
+    option (google.api.http) = {
+      patch: "/v1/projects/{project_id}/members/{user_id}"
+      body: "*"
+    };
+  }
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id}/members"
+    };
+  }
 }
 
 // Request/Response messages

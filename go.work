@@ -3,24 +3,25 @@ go 1.24.0
 toolchain go1.24.6
 
 use (
+	./pkg/auth
 	./pkg/config
 	./pkg/database
 	./pkg/kafka
 	./pkg/logger
 	./pkg/proto
+	./pkg/rbac
+	./services/attachment-service
+	./services/board-service
+	./services/comment-service
+	./services/gateway-service
+	./services/git-service
+	./services/issue-service
+	./services/notification-service
+	./services/org-service
+	./services/project-service
+	./services/search-service
+	./services/sprint-service
 	./services/template-service
 	./services/user-service
-	./services/org-service
-	./pkg/auth
-	./pkg/rbac
-	./services/project-service
-	./services/issue-service
 	./services/workflow-service
-	./services/board-service
-	./services/sprint-service
-	./services/comment-service
-	./services/notification-service
-	./services/search-service
-	./services/attachment-service
-	./services/git-service
 )
