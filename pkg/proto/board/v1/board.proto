@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package board.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/board/v1;";
+
+// Board entity
+message Board {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  string description = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+// Card entity
+message Card {
+  string id = 1;
+  string board_id = 2;
+  string issue_id = 3;
+  int32 position = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+// Requests and responses
+message CreateBoardRequest {
+  string project_id = 1;
+  string name = 2;
+  string description = 3;
+}
+message CreateBoardResponse {
+  Board board = 1;
+}
+
+message GetBoardRequest {
+  string id = 1;
+}
+message GetBoardResponse {
+  Board board = 1;
+}
+
+message ListBoardsRequest {
+  string project_id = 1;
+}
+message ListBoardsResponse {
+  repeated Board boards = 1;
+}
+
+message UpdateBoardRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+message UpdateBoardResponse {
+  Board board = 1;
+}
+
+message DeleteBoardRequest {
+  string id = 1;
+}
+message DeleteBoardResponse {}
+
+message AddCardRequest {
+  string board_id = 1;
+  string issue_id = 2;
+  int32 position = 3;
+}
+message AddCardResponse {
+  Card card = 1;
+}
+
+message MoveCardRequest {
+  string card_id = 1;
+  int32 new_position = 2;
+}
+message MoveCardResponse {
+  Card card = 1;
+}
+
+message DeleteCardRequest {
+  string card_id = 1;
+}
+message DeleteCardResponse {}
+
+message ListCardsRequest {
+  string board_id = 1;
+}
+message ListCardsResponse {
+  repeated Card cards = 1;
+}
+
+service BoardService {
+  rpc CreateBoard(CreateBoardRequest) returns (CreateBoardResponse);
+  rpc GetBoard(GetBoardRequest) returns (GetBoardResponse);
+  rpc ListBoards(ListBoardsRequest) returns (ListBoardsResponse);
+  rpc UpdateBoard(UpdateBoardRequest) returns (UpdateBoardResponse);
+  rpc DeleteBoard(DeleteBoardRequest) returns (DeleteBoardResponse);
+  rpc AddCard(AddCardRequest) returns (AddCardResponse);
+  rpc MoveCard(MoveCardRequest) returns (MoveCardResponse);
+  rpc DeleteCard(DeleteCardRequest) returns (DeleteCardResponse);
+  rpc ListCards(ListCardsRequest) returns (ListCardsResponse);
+}

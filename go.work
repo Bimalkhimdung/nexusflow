@@ -16,4 +16,5 @@ use (
 	./services/project-service
 	./services/issue-service
 	./services/workflow-service
+	./services/board-service
 )
