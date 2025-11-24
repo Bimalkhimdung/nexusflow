@@ -7,6 +7,7 @@ option go_package = "github.com/nexusflow/nexusflow/pkg/proto/issue/v1;issuev1";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
 import "proto/common/v1/common.proto";
+import "google/api/annotations.proto";
 
 // Issue entity
 message Issue {
@@ -109,12 +110,34 @@ enum IssueLinkType {
 // Issue service
 service IssueService {
   // Issue management
-  rpc CreateIssue(CreateIssueRequest) returns (CreateIssueResponse);
-  rpc GetIssue(GetIssueRequest) returns (GetIssueResponse);
+  rpc CreateIssue(CreateIssueRequest) returns (CreateIssueResponse) {
+    option (google.api.http) = {
+      post: "/v1/projects/{project_id}/issues"
+      body: "*"
+    };
+  }
+  rpc GetIssue(GetIssueRequest) returns (GetIssueResponse) {
+    option (google.api.http) = {
+      get: "/v1/issues/{id}"
+    };
+  }
   rpc GetIssueByKey(GetIssueByKeyRequest) returns (GetIssueByKeyResponse);
-  rpc UpdateIssue(UpdateIssueRequest) returns (UpdateIssueResponse);
-  rpc DeleteIssue(DeleteIssueRequest) returns (DeleteIssueResponse);
-  rpc ListIssues(ListIssuesRequest) returns (ListIssuesResponse);
+  rpc UpdateIssue(UpdateIssueRequest) returns (UpdateIssueResponse) {
+    option (google.api.http) = {
+      patch: "/v1/issues/{id}"
+      body: "*"
+    };
+  }
+  rpc DeleteIssue(DeleteIssueRequest) returns (DeleteIssueResponse) {
+    option (google.api.http) = {
+      delete: "/v1/issues/{id}"
+    };
+  }
+  rpc ListIssues(ListIssuesRequest) returns (ListIssuesResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects/{project_id}/issues"
+    };
+  }
   rpc SearchIssues(SearchIssuesRequest) returns (SearchIssuesResponse);
   
   // Issue hierarchy

@@ -109,9 +109,17 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ loading: true });
         try {
             const response = await api.get(`/projects/${projectId}/issues`);
-            set({ issues: response.data });
+            const issues = (response.data.issues || []).map((issue: any) => ({
+                ...issue,
+                title: issue.summary || 'Untitled',
+                status: 'TODO', // Default to TODO as backend uses statusId
+                priority: issue.priority ? issue.priority.replace('ISSUE_PRIORITY_', '') : 'MEDIUM',
+                type: issue.type ? issue.type.replace('ISSUE_TYPE_', '') : 'TASK'
+            }));
+            set({ issues });
         } catch (error) {
             console.error('Failed to fetch issues', error);
+            set({ issues: [] });
         } finally {
             set({ loading: false });
         }
@@ -121,7 +129,14 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ loading: true });
         try {
             const response = await api.post(`/projects/${issue.projectId}/issues`, issue);
-            set((state) => ({ issues: [...state.issues, response.data] }));
+            const newIssue = {
+                ...response.data.issue,
+                title: response.data.issue.summary || issue.title || 'Untitled',
+                status: 'TODO',
+                priority: response.data.issue.priority ? response.data.issue.priority.replace('ISSUE_PRIORITY_', '') : 'MEDIUM',
+                type: response.data.issue.type ? response.data.issue.type.replace('ISSUE_TYPE_', '') : 'TASK'
+            };
+            set((state) => ({ issues: [...state.issues, newIssue] }));
         } catch (error) {
             console.error('Failed to create issue', error);
             throw error;

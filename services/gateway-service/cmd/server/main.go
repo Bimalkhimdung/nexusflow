@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	projectv1 "github.com/nexusflow/nexusflow/pkg/proto/project/v1"
+	issuev1 "github.com/nexusflow/nexusflow/pkg/proto/issue/v1"
 )
 
 func main() {
@@ -27,6 +28,13 @@ func main() {
 	err := projectv1.RegisterProjectServiceHandlerFromEndpoint(ctx, mux, "localhost:50053", opts)
 	if err != nil {
 		log.Fatalf("Failed to register project service handler: %v", err)
+	}
+
+	// Register Issue Service
+	// Assuming issue-service runs on localhost:50054
+	err = issuev1.RegisterIssueServiceHandlerFromEndpoint(ctx, mux, "localhost:50054", opts)
+	if err != nil {
+		log.Fatalf("Failed to register issue service handler: %v", err)
 	}
 
 	// Register other services here as we add annotations...
