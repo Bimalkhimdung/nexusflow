@@ -27,6 +27,8 @@ export function Board() {
     const { issues, setIssues, fetchIssues, createIssue, projects, currentProject, fetchProjects, updateIssue } = useAppStore();
     const [columns, setColumns] = useState<{ [key: string]: Issue[] }>({});
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [pendingMove, setPendingMove] = useState<{ draggableId: string; destinationId: string; sourceId: string } | null>(null);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<IssueFormValues>({
         resolver: zodResolver(issueSchema),
         defaultValues: {
@@ -81,21 +83,45 @@ export function Board() {
 
         if (!movedIssue) return;
 
+        // Open confirmation modal instead of immediate update
+        setPendingMove({
+            draggableId,
+            destinationId: destination.droppableId,
+            sourceId: source.droppableId
+        });
+        setIsConfirmModalOpen(true);
+    };
+
+    const confirmMove = () => {
+        if (!pendingMove) return;
+
+        const { draggableId, destinationId } = pendingMove;
+
         // Optimistic update
         const newIssues = [...issues];
         const issueIndex = newIssues.findIndex(i => i.id === draggableId);
         if (issueIndex !== -1) {
             newIssues[issueIndex] = {
                 ...newIssues[issueIndex],
-                status: destination.droppableId as 'TODO' | 'IN_PROGRESS' | 'DONE'
+                status: destinationId as 'TODO' | 'IN_PROGRESS' | 'DONE'
             };
             setIssues(newIssues);
         }
 
         // Call API to update status
         updateIssue(draggableId, {
-            status: destination.droppableId as 'TODO' | 'IN_PROGRESS' | 'DONE'
+            status: destinationId as 'TODO' | 'IN_PROGRESS' | 'DONE'
         });
+
+        setIsConfirmModalOpen(false);
+        setPendingMove(null);
+    };
+
+    const cancelMove = () => {
+        setIsConfirmModalOpen(false);
+        setPendingMove(null);
+        // Force re-render to revert drag visual if needed (react-beautiful-dnd handles this mostly)
+        // We might need to toggle a key or something if it gets stuck, but usually it snaps back
     };
 
     const onSubmit = async (data: IssueFormValues) => {
@@ -282,6 +308,31 @@ export function Board() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {isConfirmModalOpen && pendingMove && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="w-full max-w-sm rounded-lg bg-background p-6 shadow-lg animate-in fade-in zoom-in duration-200">
+                        <h3 className="text-lg font-semibold mb-2">Confirm Move</h3>
+                        <p className="text-sm text-muted-foreground mb-6">
+                            Are you sure you want to move this issue to <strong>{COLUMNS.find(c => c.id === pendingMove.destinationId)?.title}</strong>?
+                        </p>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={cancelMove}
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmMove}
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+                            >
+                                Confirm
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
