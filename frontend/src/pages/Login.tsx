@@ -32,7 +32,7 @@ export default function Login() {
     return (
         <div className="min-h-screen flex relative overflow-hidden">
             {/* Animated background with darker gradient - no pink */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 animate-gradient-shift" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-500 via-blue-900 to-black-100 animate-gradient-shift" />
 
             {/* Floating animated shapes */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -147,12 +147,12 @@ export default function Login() {
                 <div className="animate-fade-in-up">
                     <div className="inline-block">
                         <h1 className="text-6xl font-bold text-white mb-4 animate-glow">
-                            NexusFlow
+                            ProjectMgmt
                         </h1>
                         <div className="h-1 w-32 bg-gradient-to-r from-blue-400 to-transparent rounded-full animate-pulse" />
                     </div>
                     <p className="text-2xl text-blue-100 mt-6 animate-fade-in-up animation-delay-200">
-                        The open-source Jira killer you can own
+                        Manage Your Project with ease
                     </p>
                 </div>
 

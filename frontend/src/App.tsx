@@ -6,6 +6,7 @@ import { Issues } from './pages/Issues';
 import { Board } from './pages/Board';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import Onboarding from './pages/Onboarding';
 import { Analytics } from './pages/Analytics';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/onboarding" element={<Onboarding />} />
 
         {/* Protected Routes */}
         <Route path="/" element={<Layout />}>
