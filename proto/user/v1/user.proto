@@ -15,12 +15,15 @@ message User {
   string avatar_url = 4;
   string timezone = 5;
   string locale = 6;
-  UserStatus status = 7;
+  string status = 7;  // Changed from UserStatus enum to string for flexibility
   repeated string organization_ids = 8;
   map<string, string> preferences = 9;
   google.protobuf.Timestamp created_at = 10;
   google.protobuf.Timestamp updated_at = 11;
   google.protobuf.Timestamp last_login_at = 12;
+  bool email_verified = 13;
+  string oauth_provider = 14;  // 'email', 'google', 'github'
+  google.protobuf.Timestamp deleted_at = 15;
 }
 
 // User status enum

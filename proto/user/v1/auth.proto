@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package nexusflow.user.v1;
+
+option go_package = "github.com/nexusflow/nexusflow/pkg/proto/user/v1;userv1";
+
+import "google/protobuf/timestamp.proto";
+import "proto/user/v1/user.proto";
+
+// Authentication service definition
+service AuthService {
+  // Register a new user
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  
+  // Login with email and password
+  rpc Login(LoginRequest) returns (LoginResponse);
+  
+  // Verify email with token
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  
+  // Request password reset
+  rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+  
+  // Reset password with token
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+  
+  // Refresh access token
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  
+  // Logout (invalidate token)
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
+
+// Register request
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string display_name = 3;
+}
+
+// Register response
+message RegisterResponse {
+  User user = 1;
+  string token = 2;
+}
+
+// Login request
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+// Login response
+message LoginResponse {
+  User user = 1;
+  string token = 2;
+  string refresh_token = 3;
+}
+
+// Verify email request
+message VerifyEmailRequest {
+  string token = 1;
+}
+
+// Verify email response
+message VerifyEmailResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Request password reset request
+message RequestPasswordResetRequest {
+  string email = 1;
+}
+
+// Request password reset response
+message RequestPasswordResetResponse {
+  bool success = 1;
+  string message = 2;
+  string token = 3; // Only for testing, remove in production
+}
+
+// Reset password request
+message ResetPasswordRequest {
+  string token = 1;
+  string new_password = 2;
+}
+
+// Reset password response
+message ResetPasswordResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Refresh token request
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+// Refresh token response
+message RefreshTokenResponse {
+  string token = 1;
+}
+
+// Logout request
+message LogoutRequest {
+  string token = 1;
+}
+
+// Logout response
+message LogoutResponse {
+  bool success = 1;
+  string message = 2;
+}

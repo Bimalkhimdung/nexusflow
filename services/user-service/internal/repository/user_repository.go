@@ -248,3 +248,43 @@ func (r *UserRepository) UpdateLastLogin(ctx context.Context, id string) error {
 
 	return nil
 }
+
+// GetByVerificationToken retrieves a user by verification token
+func (r *UserRepository) GetByVerificationToken(ctx context.Context, token string) (*models.User, error) {
+	var user models.User
+	err := r.db.NewSelect().
+		Model(&user).
+		Where("verification_token = ?", token).
+		Where("deleted_at IS NULL").
+		Scan(ctx)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found with verification token")
+	}
+	if err != nil {
+		r.log.Sugar().Errorw("Failed to get user by verification token", "error", err)
+		return nil, fmt.Errorf("get user by verification token: %w", err)
+	}
+
+	return &user, nil
+}
+
+// GetByResetToken retrieves a user by password reset token
+func (r *UserRepository) GetByResetToken(ctx context.Context, token string) (*models.User, error) {
+	var user models.User
+	err := r.db.NewSelect().
+		Model(&user).
+		Where("reset_token = ?", token).
+		Where("deleted_at IS NULL").
+		Scan(ctx)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found with reset token")
+	}
+	if err != nil {
+		r.log.Sugar().Errorw("Failed to get user by reset token", "error", err)
+		return nil, fmt.Errorf("get user by reset token: %w", err)
+	}
+
+	return &user, nil
+}

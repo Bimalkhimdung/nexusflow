@@ -240,14 +240,20 @@ func (h *UserHandler) modelToProto(user *models.User) *pb.User {
 		AvatarUrl:       user.AvatarURL,
 		Timezone:        user.Timezone,
 		Locale:          user.Locale,
-		Status:          pb.UserStatus(pb.UserStatus_value["USER_STATUS_"+string(user.Status)]),
+		Status:          string(user.Status),
 		OrganizationIds: []string{user.OrganizationID},
+		EmailVerified:   user.EmailVerified,
+		OauthProvider:   user.OAuthProvider,
 		CreatedAt:       timestamppb.New(user.CreatedAt),
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
 	if user.LastLoginAt != nil {
 		pbUser.LastLoginAt = timestamppb.New(*user.LastLoginAt)
+	}
+	
+	if user.DeletedAt != nil {
+		pbUser.DeletedAt = timestamppb.New(*user.DeletedAt)
 	}
 
 	// Convert preferences

@@ -1,13 +1,13 @@
-go 1.24.0
-
-toolchain go1.24.6
+go 1.24.6
 
 use (
 	./pkg/auth
 	./pkg/config
 	./pkg/database
+	./pkg/email
 	./pkg/kafka
 	./pkg/logger
+	./pkg/middleware
 	./pkg/proto
 	./pkg/rbac
 	./services/attachment-service

@@ -88,6 +88,14 @@ func main() {
 	userRepo := repository.NewUserRepository(db, log)
 	userService := service.NewUserService(userRepo, producer, log)
 	userHandler := handler.NewUserHandler(userService, log)
+	
+	// Initialize auth service
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "default-secret-change-in-production"
+	}
+	authService := service.NewAuthService(userRepo, jwtSecret, 24*time.Hour, log)
+	authHandler := handler.NewAuthHandler(authService, log)
 
 	// Create gRPC server
 	grpcServer := grpc.NewServer(
@@ -98,6 +106,7 @@ func main() {
 
 	// Register services
 	pb.RegisterUserServiceServer(grpcServer, userHandler)
+	pb.RegisterAuthServiceServer(grpcServer, authHandler)
 
 	// Register health check
 	healthServer := health.NewServer()
